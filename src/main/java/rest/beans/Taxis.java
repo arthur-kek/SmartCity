@@ -38,8 +38,6 @@ public class Taxis {
         return t;
     }
 
-    public synchronized List<Taxi> getTaxis() { return new ArrayList<>(taxisList); }
-
     public synchronized void setTaxisList(List<Taxi> taxisList) {
         this.taxisList = taxisList;
     }

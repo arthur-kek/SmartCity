@@ -1,7 +1,7 @@
 package rest.beans;
 
-import entities.DSPosition;
-import enums.ChargeStationEnum;
+import core.entities.DSPosition;
+import core.enums.ChargingStation;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Random;
@@ -27,7 +27,7 @@ public class Position {
     }
 
     public static Position getRandomSpawnPosition(){
-        return new Position(ChargeStationEnum.get(new Random().nextInt(4) + 1).getPosition());
+        return new Position(ChargingStation.get(new Random().nextInt(4) + 1).getPosition());
     }
 
     @Override
@@ -35,4 +35,19 @@ public class Position {
         return "(" + x + "," + y + ")";
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
 }

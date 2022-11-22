@@ -1,12 +1,12 @@
-package enums;
+package core.enums;
 
-import entities.DSPosition;
+import core.entities.DSPosition;
 import utils.Constants;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public enum ChargeStationEnum {
+public enum ChargingStation {
 
     FIRST(new DSPosition(0, 0), 1),
     SECOND(new DSPosition(0, Constants.SMART_CITY_DIMENSION - 1), 2),
@@ -24,13 +24,13 @@ public enum ChargeStationEnum {
         return id;
     }
 
-    ChargeStationEnum(DSPosition position, int id) {
+    ChargingStation(DSPosition position, int id) {
         this.position = position;
         this.id = id;
     }
 
-    public static ChargeStationEnum get(int i) {
-        Optional<ChargeStationEnum> optional = Stream.of(ChargeStationEnum.values())
+    public static ChargingStation get(int i) {
+        Optional<ChargingStation> optional = Stream.of(ChargingStation.values())
                 .filter(cs -> cs.id == i)
                 .findFirst();
 

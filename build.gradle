@@ -75,34 +75,33 @@ dependencies {
     // https://mvnrepository.com/artifact/org.eclipse.paho/org.eclipse.paho.client.mqttv3
     implementation group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.5'
 
+    implementation 'com.annimon:stream:1.2.2'
 }
 
 // GRPC
-
-idea {
-    module {
-        sourceDirs += file("${projectDir}/src/generated/main/java")
-        sourceDirs += file("${projectDir}/src/generated/main/grpc")
+sourceSets {
+    main {
+        java {
+            srcDirs 'build/generated/source/proto/main/grpc'
+            srcDirs 'build/generated/source/proto/main/java'
+        }
     }
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:$protobufVersion"
+        artifact = 'com.google.protobuf:protoc:3.10.1'
     }
 
     plugins {
         grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.25.0'
         }
     }
 
     generateProtoTasks {
-        all().each { task ->
-            task.plugins {
-                // Generate Java gRPC classes
-                grpc { }
-            }
+        all()*.plugins {
+            grpc {}
         }
     }
 }

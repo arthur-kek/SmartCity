@@ -1,5 +1,7 @@
 package rest.beans;
 
+import core.entities.DSTaxi;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="taxi")
@@ -21,6 +23,12 @@ public class Taxi {
         this.port = port;
         this.adm_server_address = adm_server_address;
         this.battery_lvl = 100;
+    }
+
+    public Taxi(DSTaxi t) {
+        this.id = t.getId();
+        this.port = t.getPort();
+        this.adm_server_address = t.getServerAddress();
     }
 
     public int getId() {

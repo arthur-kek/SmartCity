@@ -8,9 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class StartAdmServer {
-
-
+public class AdmServer {
 
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServerFactory.create(Constants.ADM_SERVER_ADDRESS);

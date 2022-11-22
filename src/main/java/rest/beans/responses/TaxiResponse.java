@@ -1,31 +1,29 @@
 package rest.beans.responses;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import rest.beans.Taxi;
+
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 @XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class TaxiResponse {
 
-    private boolean status;
+    private Taxi taxi;
+    private List<Taxi> otherTaxis;
 
-    private String message;
-
-    public boolean isStatus() {
-        return status;
+    public Taxi getTaxi() {
+        return taxi;
     }
 
-    public void setStatus(boolean status) {
-        this.status = status;
+    public void setTaxi(Taxi taxi) {
+        this.taxi = taxi;
     }
 
-    public String getMessage() {
-        return message;
+    public List<Taxi> getOtherTaxis() {
+        return otherTaxis;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setOtherTaxis(List<Taxi> otherTaxis) {
+        this.otherTaxis = otherTaxis;
     }
-
 }

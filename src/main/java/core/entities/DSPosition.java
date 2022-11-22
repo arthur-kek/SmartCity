@@ -1,4 +1,6 @@
-package entities;
+package core.entities;
+
+import rest.beans.Position;
 
 public class DSPosition {
 
@@ -9,6 +11,11 @@ public class DSPosition {
         this.y = y;
     }
 
+    public DSPosition(Position p) {
+        this.x = p.getX();
+        this.y = p.getY();
+    }
+
     public int getX() {
         return x;
     }
@@ -16,5 +23,6 @@ public class DSPosition {
     public int getY() {
         return y;
     }
+
 
 }
