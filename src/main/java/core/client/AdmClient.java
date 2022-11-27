@@ -1,14 +1,21 @@
 package core.client;
 
+import com.annimon.stream.Stream;
 import core.enums.Command;
+import core.wrappers.RESTWrapper;
+import rest.beans.Taxi;
+import rest.beans.responses.AdmClientResponse;
+import rest.beans.responses.TaxiResponse;
+import utils.Constants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 class AdmClient {
 
-    private static void help(){
+    private static void help() {
         System.out.println("\nLIST OF COMMANDS:\n" +
                 "-a OR -all TO SHOW THE LIST OF ALL TAXIS CURRENTLY PRESENT IN THE NETWORK\n" +
                 "-l OR -last WITH [n] [taxiID] TO SHOW THE LAST n STATISTICS OF GIVEN taxiId \n" +
@@ -17,23 +24,50 @@ class AdmClient {
                 "-e OR -exit TO EXIT\n");
     }
 
-    private static void error(){
-        System.out.println("\nSERVICE ERROR:\n");
+    private static void error() {
+        System.out.println("\nERROR, UNKNOWN COMMAND.\n");
+        showHelpLine();
     }
 
-    private static void all(){
-        System.out.println("\nALL:\n");
+    private static void all() {
+        System.out.println("\nLIST OF ALL TAXIS IN THE NETWORK:\n");
+        List<Taxi> taxiList = RESTWrapper.getInstance().getTaxis(Constants.ADM_SERVER_ADDRESS);
+        Stream.of(taxiList)
+                .forEach(System.out::println);
+        showHelpLine();
     }
 
-    private static void last(){
-        System.out.println("\nLAST:\n");
+    private static void last(String line) {
+        System.out.println("\nLAST N MEANS FROM TAXI:\n");
+
+        String[] values = line.split(" ");
+        int n = Integer.parseInt(values[1]);
+        int taxiId = Integer.parseInt(values[2]);
+
+        System.out.println("\nLAST N MEANS FROM TAXI ID " + taxiId + " STATISTICS:\n");
+
+        AdmClientResponse response = RESTWrapper.getInstance().getLastNStatisticsForTaxi(Constants.ADM_SERVER_ADDRESS, n, taxiId);
+
+        System.out.println(response.toString());
+
+        showHelpLine();
     }
 
-    private static void timeframe(){
+    private static void timeframe(String line) {
         System.out.println("\nTIMEFRAME:\n");
+
+        String[] values = line.split(" ");
+        long ts1 = Long.parseLong(values[1]);
+        long ts2 = Long.parseLong(values[2]);
+
+        AdmClientResponse response = RESTWrapper.getInstance().getAllStatisticsInTimeFrame(Constants.ADM_SERVER_ADDRESS, ts1, ts2);
+
+        System.out.println(response.toString());
+
+        showHelpLine();
     }
 
-    private static void exit(){
+    private static void exit() {
         System.out.println("\nSERVER IS SHUTTING DOWN...\n");
     }
 
@@ -65,14 +99,20 @@ class AdmClient {
         return Command.ERROR;
     }
 
+    public static void showHelpLine() {
+        System.out.println("TYPE -h OR -help TO SHOW HELP MENU\n");
+    }
+
     public static void main(String[] args) throws IOException {
+        init();
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("ADMINISTRATION CLIENT RUNNING...\n");
-        System.out.println("TYPE -h OR -help TO SHOW HELP MENU\n");
+        showHelpLine();
 
         boolean exit = false;
         while (!exit) {
-            Command command = parseCommand(br.readLine());
+            String line = br.readLine();
+            Command command = parseCommand(line);
             switch (command) {
                 case HELP:
                     help();
@@ -81,10 +121,10 @@ class AdmClient {
                     all();
                     break;
                 case LAST_N:
-                    last();
+                    last(line);
                     break;
                 case TIMEFRAME:
-                    timeframe();
+                    timeframe(line);
                     break;
                 case ERROR:
                     error();
@@ -97,5 +137,12 @@ class AdmClient {
         }
         br.close();
         System.exit(0);
+    }
+
+    public static void init() {
+        TaxiResponse taxi1 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(1, 111, "kek1"));
+        TaxiResponse taxi2 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(2, 112, "kek2"));
+        TaxiResponse taxi3 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(3, 113, "kek3"));
+        TaxiResponse taxi4 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(4, 114, "kek4"));
     }
 }

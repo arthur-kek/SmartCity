@@ -33,10 +33,12 @@ public class DSTaxi {
         this.state = TaxiState.FREE;
     }
 
-    public void ride() throws InterruptedException {
+    public void ride(int distance) throws InterruptedException {
         state = TaxiState.ON_ROAD;
 
         Thread.sleep(5000);
+
+        decreaseBatteryLevel(distance);
 
         state = TaxiState.FREE;
     }
@@ -45,6 +47,8 @@ public class DSTaxi {
         state = TaxiState.CHARGING;
 
         Thread.sleep(10000);
+
+        this.batteryLevel = 100;
 
         state = TaxiState.FREE;
     }
@@ -56,6 +60,14 @@ public class DSTaxi {
     public void leaveNetwork() throws InterruptedException {
         state = TaxiState.QUITTING;
         // TODO: Not yet implemented
+    }
+
+    public void decreaseBatteryLevel(int points) throws InterruptedException {
+        this.batteryLevel =- points;
+
+        if (batteryLevel <= 30) {
+            recharge();
+        }
     }
 
     public List<DSTaxi> getOtherTaxis() {

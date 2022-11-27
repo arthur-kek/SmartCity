@@ -6,17 +6,17 @@ import java.util.List;
 @XmlRootElement
 public class Statistic {
 
-    private float traveledKm;
-    private int doneRidesNumber;
+    private double traveledKm;
+    private double doneRidesNumber;
     private List<Pollution> pollutionList;
     private long tsOfComputation;
-    private int batteryLvl;
+    private double batteryLvl;
 
     public Statistic() {
 
     }
 
-    public Statistic(float traveledKm, int doneRidesNumber, List<Pollution> pollutionList, long tsOfComputation, int batteryLvl) {
+    public Statistic(double traveledKm, double doneRidesNumber, List<Pollution> pollutionList, long tsOfComputation, double batteryLvl) {
         this.traveledKm = traveledKm;
         this.doneRidesNumber = doneRidesNumber;
         this.pollutionList = pollutionList;
@@ -24,7 +24,7 @@ public class Statistic {
         this.batteryLvl = batteryLvl;
     }
 
-    public float getTraveledKm() {
+    public double getTraveledKm() {
         return traveledKm;
     }
 
@@ -32,7 +32,7 @@ public class Statistic {
         this.traveledKm = traveledKm;
     }
 
-    public int getDoneRidesNumber() {
+    public double getDoneRidesNumber() {
         return doneRidesNumber;
     }
 
@@ -56,7 +56,7 @@ public class Statistic {
         this.tsOfComputation = tsOfComputation;
     }
 
-    public int getBatteryLvl() {
+    public double getBatteryLvl() {
         return batteryLvl;
     }
 

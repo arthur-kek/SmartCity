@@ -21,15 +21,15 @@ public class RegistrationService extends Thread {
         System.out.println("Start registration new Taxi");
         TaxiResponse newTaxi = RESTWrapper.getInstance().addTaxi(taxi.getServerAddress(), new Taxi(taxi));
 
-       if (newTaxi != null) {
-           taxi = new DSTaxi(newTaxi.getTaxi());
+        if (newTaxi != null) {
+            taxi = new DSTaxi(newTaxi.getTaxi());
 
-           List<DSTaxi> otherTaxis = Stream.of(newTaxi.getOtherTaxis())
-                   .map(DSTaxi::new)
-                   .toList();
+            List<DSTaxi> otherTaxis = Stream.of(newTaxi.getOtherTaxis())
+                    .map(DSTaxi::new)
+                    .toList();
 
-           taxi.setOtherTaxis(otherTaxis);
-       }
+            taxi.setOtherTaxis(otherTaxis);
+        }
     }
 
     private void printResult() {
@@ -39,13 +39,12 @@ public class RegistrationService extends Thread {
 
     @Override
     public void run() {
-
         try {
             register();
         } catch (IOException e) {
-
+            // TODO: Not yet implemented
         } finally {
-
+            printResult();
         }
     }
 }

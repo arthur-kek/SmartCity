@@ -73,10 +73,12 @@ public class Taxi {
 
     @Override
     public String toString() {
-        return "Taxi |" +
-                "id='" + id + '\n' +
-                ", address='" + adm_server_address + '\n' +
+        return "Taxi{" +
+                "id=" + id +
                 ", port=" + port +
-                '|';
+                ", adm_server_address='" + adm_server_address + '\'' +
+                ", battery_lvl=" + battery_lvl +
+                ", position=" + position +
+                '}';
     }
 }

@@ -7,11 +7,11 @@ import java.util.List;
 
 public class DSStatistic {
 
-    private float traveledKm;
-    private int doneRidesNumber;
+    private double traveledKm;
+    private double doneRidesNumber;
     private List<Pollution> pollutionList;
     private long tsOfComputation;
-    private int batteryLvl;
+    private double batteryLvl;
 
     public DSStatistic(float traveledKm, int doneRidesNumber, List<Pollution> pollutionList, long tsOfComputation, int batteryLvl) {
         this.traveledKm = traveledKm;
@@ -30,7 +30,7 @@ public class DSStatistic {
     }
 
 
-    public float getTraveledKm() {
+    public double getTraveledKm() {
         return traveledKm;
     }
 
@@ -38,7 +38,7 @@ public class DSStatistic {
         this.traveledKm = traveledKm;
     }
 
-    public int getDoneRidesNumber() {
+    public double getDoneRidesNumber() {
         return doneRidesNumber;
     }
 
@@ -62,7 +62,7 @@ public class DSStatistic {
         this.tsOfComputation = tsOfComputation;
     }
 
-    public int getBatteryLvl() {
+    public double getBatteryLvl() {
         return batteryLvl;
     }
 

@@ -1,21 +1,16 @@
 package core.wrappers;
 
-import com.annimon.stream.Stream;
 import com.sun.jersey.api.client.*;
-import core.entities.DSStatistic;
 import rest.beans.Statistic;
 import rest.beans.Taxi;
 import rest.beans.Taxis;
-import rest.beans.responses.NMeansResponse;
+import rest.beans.responses.AdmClientResponse;
 import rest.beans.responses.TaxiResponse;
-import rest.beans.responses.TimeFrameMeansResponse;
 import utils.Constants;
 
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class RESTWrapper {
 
@@ -130,8 +125,8 @@ public class RESTWrapper {
         return result;
     }
 
-    public List<DSStatistic> getLastNStatisticsForTaxi(String serverAddress, int taxiID, int n) {
-        List<DSStatistic> statistics = new ArrayList<>();
+    public AdmClientResponse getLastNStatisticsForTaxi(String serverAddress, int taxiID, int n) {
+        AdmClientResponse admClientResponse = new AdmClientResponse();
 
         try {
             ClientResponse response = webClient
@@ -141,19 +136,17 @@ public class RESTWrapper {
             if (response.getStatus() != 200) {
                 // Response error
             } else {
-                statistics = Stream.of(response.getEntity(NMeansResponse.class).getStatisticsResponse())
-                        .map(DSStatistic::new)
-                        .toList();
+                admClientResponse = response.getEntity(AdmClientResponse.class);
             }
         } catch (ClientHandlerException e) {
             // Server non raggiungibile
         }
 
-        return statistics;
+        return admClientResponse;
     }
 
-    public Map<Integer, DSStatistic> getAllStatisticsInTimeFrame(String serverAddress, long ts1, long ts2) {
-        Map<Integer, DSStatistic> statisticMap = new HashMap<>();
+    public AdmClientResponse getAllStatisticsInTimeFrame(String serverAddress, long ts1, long ts2) {
+        AdmClientResponse admClientResponse = new AdmClientResponse();
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "statistics/timeframe/" + ts1 + "|" + ts2)
@@ -162,14 +155,13 @@ public class RESTWrapper {
             if (response.getStatus() != 200) {
                 // Response error
             } else {
-                Stream.of(response.getEntity(TimeFrameMeansResponse.class))
-                        .map(r -> statisticMap.put(r.getTaxiId(), new DSStatistic(r.getAverageStatistic())));
+                admClientResponse = response.getEntity(AdmClientResponse.class);
             }
         } catch (ClientHandlerException e) {
             // Server non raggiungibile
         }
 
-        return statisticMap;
+        return admClientResponse;
     }
 
 }
