@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "Position.proto";
+package grpc.protocols;
 
 message HelloRequest {
   int32 taxiId = 1;
@@ -13,7 +14,7 @@ message HelloResponse {
 }
 
 service TaxiProtocol {
-  rpc notifyOther(HelloRequest) returns (HelloResponse);
+  rpc sayHello(HelloRequest) returns (HelloResponse);
 }
 
 

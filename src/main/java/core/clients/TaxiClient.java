@@ -1,4 +1,4 @@
-package core.client;
+package core.clients;
 
 public class TaxiClient {
 

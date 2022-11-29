@@ -1,4 +1,4 @@
-package core.client;
+package core.clients;
 
 import com.annimon.stream.Stream;
 import core.enums.Command;
