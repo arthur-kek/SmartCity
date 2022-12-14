@@ -6,7 +6,6 @@ import rest.beans.Taxi;
 import rest.beans.Taxis;
 import rest.beans.responses.AdmClientResponse;
 import rest.beans.responses.TaxiResponse;
-import utils.Constants;
 
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -28,22 +27,9 @@ public class RESTWrapper {
         return instance;
     }
 
-    // TODO togliere ai fini del progetto finale in metodo main
-    public static void main(String args[]) {
-
-        TaxiResponse taxi1 = getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(1, 111, "kek1"));
-        TaxiResponse taxi2 = getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(2, 112, "kek2"));
-        TaxiResponse taxi3 = getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(3, 113, "kek3"));
-        TaxiResponse taxi4 = getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(4, 114, "kek4"));
-
-        List<Taxi> taxiList = getInstance().getTaxis(Constants.ADM_SERVER_ADDRESS);
-
-        //boolean result = getInstance().deleteTaxi(Constants.ADM_SERVER_ADDRESS, 1);
-    }
-
     public TaxiResponse addTaxi(String serverAddress, Taxi taxi) {
         TaxiResponse taxiResponse = new TaxiResponse();
-
+        System.out.printf("ADDING TAXI WITH ID %d TO THE NETWORK%n", taxi.getId());
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "taxi/add")
@@ -51,21 +37,21 @@ public class RESTWrapper {
                     .post(ClientResponse.class, taxi);
 
             if (response.getStatus() == 304) {
-                // Taxi con lo stesso ID esiste
+                System.out.printf("TAXI WITH ID %d IS ALREADY PRESENT%n", taxi.getId());
             } else if (response.getStatus() != 200) {
-                // Qualche errore generico del server
+                System.out.printf("GENERIC ERROR DURING ADDING TAXI WITH ID %d TO THE NETWORK%n", taxi.getId());
             } else {
                 taxiResponse = response.getEntity(TaxiResponse.class);
             }
         } catch (ClientHandlerException e) {
-            //Server non raggiungibile
+            System.out.println("SERVER IS UNREACHABLE");
         }
         return taxiResponse;
     }
 
     public List<Taxi> getTaxis(String serverAddress) {
         List<Taxi> taxiList = new ArrayList<>();
-
+        System.out.printf("TRYING TO GET ALL TAXIS FROM %s%n", serverAddress);
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "taxi/getTaxis")
@@ -73,19 +59,19 @@ public class RESTWrapper {
                     .get(ClientResponse.class);
 
             if (response.getStatus() != 200) {
-                // Qualche errore generico del server
+                System.out.printf("TRYING TO GET ALL TAXIS FROM %s GENERIC ERROR%n", serverAddress);
             } else {
                 taxiList = response.getEntity(Taxis.class).getTaxisList();
             }
         } catch (ClientHandlerException e) {
-            //Server non raggiungibile
+            System.out.println("SERVER IS UNREACHABLE");
         }
         return taxiList;
     }
 
     public boolean deleteTaxi(String serverAddress, int taxiID) {
         boolean result = false;
-
+        System.out.printf("DELETING TAXI WITH ID %d FROM THE NETWORK%n", taxiID);
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "taxi/delete/" + taxiID)
@@ -93,20 +79,20 @@ public class RESTWrapper {
                     .delete(ClientResponse.class);
 
             if (response.getStatus() != 200) {
-                // Response error
+                System.out.printf("DELETING TAXI WITH ID %d FROM THE NETWORK GENERIC ERROR%n", taxiID);
             } else {
-                // Success
+                System.out.printf("TAXI WITH ID %d IS DELETED FROM THE NETWORK%n", taxiID);
                 result = true;
             }
         } catch (ClientHandlerException e) {
-            // Server non raggiungibile
+            System.out.println("SERVER IS UNREACHABLE");
         }
         return result;
     }
 
     public boolean pushStatistics(String serverAddress, int taxiID, Statistic statistic) {
         boolean result = false;
-
+        System.out.printf("PUSHING STATISTICS FOR %d ON %s%n", taxiID, serverAddress);
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "statistics/push/" + taxiID)
@@ -114,32 +100,32 @@ public class RESTWrapper {
                     .post(ClientResponse.class, statistic);
 
             if (response.getStatus() != 200) {
-                // Response error
+                System.out.printf("PUSHING STATISTICS FOR %d ON %s GENERIC ERROR%n", taxiID, serverAddress);
             } else {
-                // Success
+                System.out.printf("PUSHING STATISTICS FOR %d ON %s IS COMPLETED%n", taxiID, serverAddress);
                 result = true;
             }
         } catch (ClientHandlerException e) {
-            // Server non raggiungibile
+            System.out.println("SERVER IS UNREACHABLE");
         }
         return result;
     }
 
     public AdmClientResponse getLastNStatisticsForTaxi(String serverAddress, int taxiID, int n) {
         AdmClientResponse admClientResponse = new AdmClientResponse();
-
+        System.out.printf("TRYING TO GET LAST %d OF TAXI ID %d FROM %s%n", n, taxiID, serverAddress);
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "statistics/last/" + n + "|" + taxiID)
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .get(ClientResponse.class);
             if (response.getStatus() != 200) {
-                // Response error
+                System.out.printf("TRYING TO GET LAST %d OF TAXI ID %d FROM %s GENERIC ERROR%n", n, taxiID, serverAddress);
             } else {
                 admClientResponse = response.getEntity(AdmClientResponse.class);
             }
         } catch (ClientHandlerException e) {
-            // Server non raggiungibile
+            System.out.println("SERVER IS UNREACHABLE");
         }
 
         return admClientResponse;
@@ -147,18 +133,19 @@ public class RESTWrapper {
 
     public AdmClientResponse getAllStatisticsInTimeFrame(String serverAddress, long ts1, long ts2) {
         AdmClientResponse admClientResponse = new AdmClientResponse();
+        System.out.printf("TRYING TO GET ALL STATISTICS BETWEEN TS %d AND TS %d FROM %s%n", ts1, ts2, serverAddress);
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "statistics/timeframe/" + ts1 + "|" + ts2)
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .get(ClientResponse.class);
             if (response.getStatus() != 200) {
-                // Response error
+                System.out.printf("TRYING TO GET ALL STATISTICS BETWEEN TS %d AND TS %d FROM %s GENERIC ERROR%n", ts1, ts2, serverAddress);
             } else {
                 admClientResponse = response.getEntity(AdmClientResponse.class);
             }
         } catch (ClientHandlerException e) {
-            // Server non raggiungibile
+            System.out.println("SERVER IS UNREACHABLE");
         }
 
         return admClientResponse;

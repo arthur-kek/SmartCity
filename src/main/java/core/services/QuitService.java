@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 
 public class QuitService extends Thread {
 
+    private final static String SERVICE_HEADER = "QUIT_SERVICE";
     private DSTaxi taxi;
 
     public QuitService(DSTaxi taxi) {
@@ -16,8 +17,6 @@ public class QuitService extends Thread {
 
     @Override
     public void run() {
-        String outputHeader = "QUIT SERVICE:";
-
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         try {
             while (true) {

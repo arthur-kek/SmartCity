@@ -12,4 +12,10 @@ public class Constants {
             ADM_SERVER_HOSTNAME, ADM_SERVER_PORT);
 
     public static final int SMART_CITY_DIMENSION = 10;
+
+    public static final int FULL_BATTERY_LEVEL = 100;
+
+    public static final int CRITICAL_BATTERY_LEVEL = 30;
+
+    public static final int SEND_STATISTIC_FREQUENCY = 15000;
 }

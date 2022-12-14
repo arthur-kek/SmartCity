@@ -29,7 +29,6 @@ public class DSStatistic {
         this.batteryLvl = statistic.getBatteryLvl();
     }
 
-
     public double getTraveledKm() {
         return traveledKm;
     }

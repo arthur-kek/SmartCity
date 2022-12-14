@@ -24,5 +24,11 @@ public class DSPosition {
         return y;
     }
 
-
+    @Override
+    public String toString() {
+        return "DSPosition{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
+    }
 }

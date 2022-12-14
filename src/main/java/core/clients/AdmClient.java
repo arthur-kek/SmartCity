@@ -5,7 +5,6 @@ import core.enums.Command;
 import core.wrappers.RESTWrapper;
 import rest.beans.Taxi;
 import rest.beans.responses.AdmClientResponse;
-import rest.beans.responses.TaxiResponse;
 import utils.Constants;
 
 import java.io.BufferedReader;
@@ -99,12 +98,11 @@ class AdmClient {
         return Command.ERROR;
     }
 
-    public static void showHelpLine() {
+    private static void showHelpLine() {
         System.out.println("TYPE -h OR -help TO SHOW HELP MENU\n");
     }
 
     public static void main(String[] args) throws IOException {
-        init();
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("ADMINISTRATION CLIENT RUNNING...\n");
         showHelpLine();
@@ -139,10 +137,4 @@ class AdmClient {
         System.exit(0);
     }
 
-    public static void init() {
-        TaxiResponse taxi1 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(1, 111, "kek1"));
-        TaxiResponse taxi2 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(2, 112, "kek2"));
-        TaxiResponse taxi3 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(3, 113, "kek3"));
-        TaxiResponse taxi4 = RESTWrapper.getInstance().addTaxi(Constants.ADM_SERVER_ADDRESS, new Taxi(4, 114, "kek4"));
-    }
 }

@@ -1,6 +1,7 @@
 package rest.beans;
 
 import core.entities.DSTaxi;
+import utils.Constants;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -22,7 +23,7 @@ public class Taxi {
         this.id = id;
         this.port = port;
         this.adm_server_address = adm_server_address;
-        this.battery_lvl = 100;
+        this.battery_lvl = Constants.FULL_BATTERY_LEVEL;
     }
 
     public Taxi(DSTaxi t) {

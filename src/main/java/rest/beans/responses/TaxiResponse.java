@@ -3,6 +3,7 @@ package rest.beans.responses;
 import rest.beans.Taxi;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement
@@ -17,6 +18,7 @@ public class TaxiResponse {
 
     public void setTaxi(Taxi taxi) {
         this.taxi = taxi;
+        otherTaxis = new ArrayList<>();
     }
 
     public List<Taxi> getOtherTaxis() {
