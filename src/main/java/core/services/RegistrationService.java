@@ -13,6 +13,7 @@ import java.util.List;
 
 public class RegistrationService extends Thread {
 
+    private final static String SERVICE_NAME = "REGISTRATION_SERVICE";
     private DSTaxi taxi;
 
     public RegistrationService(DSTaxi taxi) {
@@ -27,6 +28,7 @@ public class RegistrationService extends Thread {
             taxi.setId(newTaxi.getTaxi().getId());
             taxi.setPort(newTaxi.getTaxi().getPort());
             taxi.setPosition(new DSPosition(newTaxi.getTaxi().getPosition()));
+            taxi.setBatteryLevel(newTaxi.getTaxi().getBattery_lvl());
 
             List<DSTaxi> otherTaxis = Stream.of(newTaxi.getOtherTaxis())
                     .map(DSTaxi::new)
@@ -46,7 +48,7 @@ public class RegistrationService extends Thread {
         try {
             register();
         } catch (IOException e) {
-            System.out.printf("ERRO DURING REGISTRATION TAXI ID %d", taxi.getId());
+            System.out.printf("ERROR DURING REGISTRATION TAXI ID %d", taxi.getId());
         } finally {
             printResult();
         }

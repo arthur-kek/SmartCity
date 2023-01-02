@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 
 public class QuitService extends Thread {
 
-    private final static String SERVICE_HEADER = "QUIT_SERVICE";
+    private final static String SERVICE_NAME = "QUIT_SERVICE";
     private DSTaxi taxi;
 
     public QuitService(DSTaxi taxi) {
@@ -27,13 +27,15 @@ public class QuitService extends Thread {
                         break;
                     }
                 } catch (IOException e) {
-
+                    System.out.println(SERVICE_NAME + " GENERIC ERROR");
+                    e.printStackTrace();
                 }
             }
         } catch (InterruptedException e) {
-
+            System.out.println(SERVICE_NAME + " INTERRUPTED");
+            e.printStackTrace();
         } finally {
-            // Terminato
+            System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 }

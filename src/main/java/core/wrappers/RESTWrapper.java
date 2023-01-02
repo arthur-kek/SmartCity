@@ -1,6 +1,7 @@
 package core.wrappers;
 
 import com.sun.jersey.api.client.*;
+import rest.beans.Position;
 import rest.beans.Statistic;
 import rest.beans.Taxi;
 import rest.beans.Taxis;
@@ -90,8 +91,7 @@ public class RESTWrapper {
         return result;
     }
 
-    public boolean pushStatistics(String serverAddress, int taxiID, Statistic statistic) {
-        boolean result = false;
+    public void pushStatistics(String serverAddress, int taxiID, Statistic statistic) {
         System.out.printf("PUSHING STATISTICS FOR %d ON %s%n", taxiID, serverAddress);
         try {
             ClientResponse response = webClient
@@ -103,23 +103,24 @@ public class RESTWrapper {
                 System.out.printf("PUSHING STATISTICS FOR %d ON %s GENERIC ERROR%n", taxiID, serverAddress);
             } else {
                 System.out.printf("PUSHING STATISTICS FOR %d ON %s IS COMPLETED%n", taxiID, serverAddress);
-                result = true;
             }
         } catch (ClientHandlerException e) {
             System.out.println("SERVER IS UNREACHABLE");
         }
-        return result;
     }
 
-    public AdmClientResponse getLastNStatisticsForTaxi(String serverAddress, int taxiID, int n) {
+    public AdmClientResponse getLastNStatisticsForTaxi(String serverAddress, int n, int taxiID) {
         AdmClientResponse admClientResponse = new AdmClientResponse();
         System.out.printf("TRYING TO GET LAST %d OF TAXI ID %d FROM %s%n", n, taxiID, serverAddress);
         try {
             ClientResponse response = webClient
-                    .resource(serverAddress + "statistics/last/" + n + "|" + taxiID)
+                    .resource(serverAddress + "statistics/last/" + n + "-" + taxiID)
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .get(ClientResponse.class);
-            if (response.getStatus() != 200) {
+            if (response.getStatus() == 304) {
+                System.out.printf("THERE ARE NO STATISTICS FOR TAXI ID %d ON %s%n", taxiID, serverAddress);
+                return null;
+            } else if (response.getStatus() != 200) {
                 System.out.printf("TRYING TO GET LAST %d OF TAXI ID %d FROM %s GENERIC ERROR%n", n, taxiID, serverAddress);
             } else {
                 admClientResponse = response.getEntity(AdmClientResponse.class);
@@ -136,10 +137,12 @@ public class RESTWrapper {
         System.out.printf("TRYING TO GET ALL STATISTICS BETWEEN TS %d AND TS %d FROM %s%n", ts1, ts2, serverAddress);
         try {
             ClientResponse response = webClient
-                    .resource(serverAddress + "statistics/timeframe/" + ts1 + "|" + ts2)
+                    .resource(serverAddress + "statistics/timeframe/" + ts1 + "-" + ts2)
                     .type(MediaType.APPLICATION_JSON_TYPE)
                     .get(ClientResponse.class);
-            if (response.getStatus() != 200) {
+            if (response.getStatus() == 304) {
+                System.out.printf("THERE ARE NO STATISTICS FOR TAXIS ON %s%n BETWEEN %d and %d", serverAddress, ts1, ts2);
+            } else if (response.getStatus() != 200) {
                 System.out.printf("TRYING TO GET ALL STATISTICS BETWEEN TS %d AND TS %d FROM %s GENERIC ERROR%n", ts1, ts2, serverAddress);
             } else {
                 admClientResponse = response.getEntity(AdmClientResponse.class);

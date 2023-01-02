@@ -1,9 +1,9 @@
 package rest.helpers;
 
-import rest.beans.Pollution;
 import rest.beans.Statistic;
 import rest.beans.responses.AdmClientResponse;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class StatisticsHelper {
             totalKm += statistic.getTraveledKm();
             totalBattery += statistic.getBatteryLvl();
             totalRides += statistic.getDoneRidesNumber();
-            totalPm += calculateAveragePmValue(statistic.getPollutionList());
+            totalPm += 1; //calculateAveragePmValue(statistic.getPollutionList());
         }
 
         return new AdmClientResponse(
@@ -39,20 +39,23 @@ public class StatisticsHelper {
 
     public static AdmClientResponse getAllMeansInTimeFrame(long ts1, long ts2, Map<Integer, List<Statistic>> statistics) {
         List<Statistic> statisticsToProcess = new ArrayList<>();
+        Timestamp statisticTime;
         for (Map.Entry<Integer, List<Statistic>> entry : statistics.entrySet()) {
-            for (Statistic statistic : entry.getValue())
-                if (statistic.getTsOfComputation() > ts1 && statistic.getTsOfComputation() < ts2) {
+            for (Statistic statistic : entry.getValue()) {
+                statisticTime = Timestamp.valueOf(statistic.getTsOfComputation());
+                if (statisticTime.getTime() > ts1 && statisticTime.getTime() < ts2) {
                     statisticsToProcess.add(statistic);
                 }
+            }
         }
 
         return getLastNMeans(statisticsToProcess.size(), statisticsToProcess);
     }
 
-    public static double calculateAveragePmValue(List<Pollution> pollutionList) {
+    public static double calculateAveragePmValue(List<Double> pollutionList) {
         double totalPm = 0;
-        for (Pollution pollution : pollutionList) {
-            totalPm += pollution.getPM10();
+        for (Double pollution : pollutionList) {
+            totalPm += pollution;
         }
 
         return totalPm / pollutionList.size();

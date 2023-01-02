@@ -12,7 +12,6 @@ public class Taxi {
     private int port;
     private String adm_server_address;
     private int battery_lvl;
-
     private Position position;
 
     public Taxi() {

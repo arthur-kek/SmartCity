@@ -11,7 +11,7 @@ import java.util.List;
 
 public class HelloService extends Thread {
 
-    private final static String SERVICE_HEADER = "HELLO_SERVICE";
+    private final static String SERVICE_NAME = "HELLO_SERVICE";
 
     private DSTaxi taxi;
 
@@ -42,15 +42,17 @@ public class HelloService extends Thread {
     @Override
     public void run() {
         try {
-            System.out.println(SERVICE_HEADER + " STARTED");
+            System.out.println(SERVICE_NAME + " STARTED");
             sayHelloInBroadcast();
 
         } catch (InterruptedException ie) {
-            System.out.println(SERVICE_HEADER + " INTERRUPTED");
+            System.out.println(SERVICE_NAME + " INTERRUPTED");
             ie.printStackTrace();
         } catch (Throwable t) {
-            System.out.println(SERVICE_HEADER + " GENERIC ERROR");
+            System.out.println(SERVICE_NAME + " GENERIC ERROR");
             t.printStackTrace();
+        } finally {
+            System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 

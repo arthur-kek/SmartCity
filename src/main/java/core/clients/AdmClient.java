@@ -47,7 +47,9 @@ class AdmClient {
 
         AdmClientResponse response = RESTWrapper.getInstance().getLastNStatisticsForTaxi(Constants.ADM_SERVER_ADDRESS, n, taxiId);
 
-        System.out.println(response.toString());
+        if (response != null) {
+            System.out.println(response);
+        }
 
         showHelpLine();
     }
@@ -61,7 +63,9 @@ class AdmClient {
 
         AdmClientResponse response = RESTWrapper.getInstance().getAllStatisticsInTimeFrame(Constants.ADM_SERVER_ADDRESS, ts1, ts2);
 
-        System.out.println(response.toString());
+        if (response != null) {
+            System.out.println(response);
+        }
 
         showHelpLine();
     }

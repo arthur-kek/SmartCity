@@ -1,22 +1,23 @@
 package rest.beans;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.*;
 import java.util.List;
 
 @XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Statistic {
 
     private double traveledKm;
-    private double doneRidesNumber;
-    private List<Pollution> pollutionList;
-    private long tsOfComputation;
-    private double batteryLvl;
+    private int doneRidesNumber;
+    private List<Double> pollutionList;
+    private String tsOfComputation;
+    private int batteryLvl;
 
     public Statistic() {
 
     }
 
-    public Statistic(double traveledKm, double doneRidesNumber, List<Pollution> pollutionList, long tsOfComputation, double batteryLvl) {
+    public Statistic(double traveledKm, int doneRidesNumber, List<Double> pollutionList, String tsOfComputation, int batteryLvl) {
         this.traveledKm = traveledKm;
         this.doneRidesNumber = doneRidesNumber;
         this.pollutionList = pollutionList;
@@ -28,11 +29,11 @@ public class Statistic {
         return traveledKm;
     }
 
-    public void setTraveledKm(float traveledKm) {
+    public void setTraveledKm(double traveledKm) {
         this.traveledKm = traveledKm;
     }
 
-    public double getDoneRidesNumber() {
+    public int getDoneRidesNumber() {
         return doneRidesNumber;
     }
 
@@ -40,27 +41,46 @@ public class Statistic {
         this.doneRidesNumber = doneRidesNumber;
     }
 
-    public List<Pollution> getPollutionList() {
+    public List<Double> getPollutionList() {
         return pollutionList;
     }
 
-    public void setPollutionList(List<Pollution> pollutionList) {
+    public void setPollutionList(List<Double> pollutionList) {
         this.pollutionList = pollutionList;
     }
 
-    public long getTsOfComputation() {
+    public String getTsOfComputation() {
         return tsOfComputation;
     }
 
-    public void setTsOfComputation(long tsOfComputation) {
+    public void setTsOfComputation(String tsOfComputation) {
         this.tsOfComputation = tsOfComputation;
     }
 
-    public double getBatteryLvl() {
+    public int getBatteryLvl() {
         return batteryLvl;
     }
 
     public void setBatteryLvl(int batteryLvl) {
         this.batteryLvl = batteryLvl;
+    }
+
+    private String getPMList() {
+        String s = "";
+        for (Double d : pollutionList) {
+            s.concat(d + "|");
+        }
+        return s;
+    }
+
+    @Override
+    public String toString() {
+        return "Statistic{" +
+                "\ntraveledKm=" + traveledKm +
+                ", \ndoneRidesNumber=" + doneRidesNumber +
+                ", \npollutionList=" + getPMList() +
+                ", \ntsOfComputation=" + tsOfComputation +
+                ", \nbatteryLvl=" + batteryLvl +
+                '}';
     }
 }

@@ -1,19 +1,19 @@
 package core.entities;
 
-import rest.beans.Pollution;
 import rest.beans.Statistic;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 public class DSStatistic {
 
     private double traveledKm;
     private double doneRidesNumber;
-    private List<Pollution> pollutionList;
-    private long tsOfComputation;
+    private List<Double> pollutionList;
+    private String tsOfComputation;
     private double batteryLvl;
 
-    public DSStatistic(float traveledKm, int doneRidesNumber, List<Pollution> pollutionList, long tsOfComputation, int batteryLvl) {
+    public DSStatistic(float traveledKm, int doneRidesNumber, List<Double> pollutionList, String tsOfComputation, int batteryLvl) {
         this.traveledKm = traveledKm;
         this.doneRidesNumber = doneRidesNumber;
         this.pollutionList = pollutionList;
@@ -24,8 +24,8 @@ public class DSStatistic {
     public DSStatistic(Statistic statistic) {
         this.traveledKm = statistic.getTraveledKm();
         this.doneRidesNumber = statistic.getDoneRidesNumber();
-        this.pollutionList = statistic.getPollutionList();
-        this.tsOfComputation = statistic.getTsOfComputation();
+        //this.pollutionList = statistic.getPollutionList();
+        //this.tsOfComputation = statistic.getTsOfComputation();
         this.batteryLvl = statistic.getBatteryLvl();
     }
 
@@ -33,7 +33,7 @@ public class DSStatistic {
         return traveledKm;
     }
 
-    public void setTraveledKm(float traveledKm) {
+    public void setTraveledKm(double traveledKm) {
         this.traveledKm = traveledKm;
     }
 
@@ -41,23 +41,23 @@ public class DSStatistic {
         return doneRidesNumber;
     }
 
-    public void setDoneRidesNumber(int doneRidesNumber) {
+    public void setDoneRidesNumber(double doneRidesNumber) {
         this.doneRidesNumber = doneRidesNumber;
     }
 
-    public List<Pollution> getPollutionList() {
+    public List<Double> getPollutionList() {
         return pollutionList;
     }
 
-    public void setPollutionList(List<Pollution> pollutionList) {
+    public void setPollutionList(List<Double> pollutionList) {
         this.pollutionList = pollutionList;
     }
 
-    public long getTsOfComputation() {
+    public String getTsOfComputation() {
         return tsOfComputation;
     }
 
-    public void setTsOfComputation(long tsOfComputation) {
+    public void setTsOfComputation(String tsOfComputation) {
         this.tsOfComputation = tsOfComputation;
     }
 
@@ -65,7 +65,11 @@ public class DSStatistic {
         return batteryLvl;
     }
 
-    public void setBatteryLvl(int batteryLvl) {
+    public void setBatteryLvl(double batteryLvl) {
         this.batteryLvl = batteryLvl;
     }
 }
+
+
+
+

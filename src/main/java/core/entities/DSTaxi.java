@@ -3,10 +3,7 @@ package core.entities;
 import com.annimon.stream.Stream;
 import core.enums.District;
 import core.enums.TaxiState;
-import core.services.HelloService;
-import core.services.QuitService;
-import core.services.RegistrationService;
-import core.services.TaxiService;
+import core.services.*;
 import core.wrappers.RESTWrapper;
 import grpc.protocols.TaxiProtocolOuterClass;
 import rest.beans.Taxi;
@@ -24,15 +21,28 @@ public class DSTaxi {
     private String serverAddress;
     private int batteryLevel;
     private DSPosition position;
+    private double traveledKM;
+    private int doneRidesNumber;
+
+    private List<Double> averagePollution = new ArrayList<>();
     private TaxiState state = TaxiState.FREE;
     private List<DSTaxi> otherTaxis = new ArrayList<>();
     private District district;
     private TaxiService taxiService;
     private RegistrationService registrationService;
     private HelloService helloService;
+    private SensorService sensorService;
+    private QuitService quitService;
+    private PushStatisticsService pushStatisticsService;
 
     private final Object lockExit = new Object();
     private final Object lockCharging = new Object();
+
+    public void dropAllStatistics() {
+        this.traveledKM = 0;
+        this.doneRidesNumber = 0;
+        averagePollution.clear();
+    }
 
     public DSTaxi(int id, int port, String serverAddress, DSPosition position, TaxiState state, List<DSTaxi> otherTaxis) {
         this.id = id;
@@ -166,6 +176,8 @@ public class DSTaxi {
         startTaxiService();
         startRegistrationService();
         startHelloService();
+        startSensorService();
+        startPushStatisticsService();
         waitExitCall();
     }
 
@@ -175,8 +187,13 @@ public class DSTaxi {
         taxiService.join();
     }
 
+    private void startSensorService() throws InterruptedException {
+        sensorService = new SensorService(this);
+        sensorService.start();
+    }
+
     private void startQuitService() {
-        QuitService quitService = new QuitService(this);
+        quitService = new QuitService(this);
         quitService.start();
     }
 
@@ -190,6 +207,11 @@ public class DSTaxi {
         helloService = new HelloService(this);
         helloService.start();
         helloService.join();
+    }
+
+    private void startPushStatisticsService() throws InterruptedException {
+        pushStatisticsService = new PushStatisticsService(this);
+        pushStatisticsService.start();
     }
 
     // End region
@@ -252,6 +274,30 @@ public class DSTaxi {
 
     public void setState(TaxiState state) {
         this.state = state;
+    }
+
+    public List<Double> getAveragePollution() {
+        return averagePollution;
+    }
+
+    public void addPollutionAvg(double value) {
+        this.averagePollution.add(value);
+    }
+
+    public double getTraveledKM() {
+        return traveledKM;
+    }
+
+    public void setTraveledKM(double traveledKM) {
+        this.traveledKM = traveledKM;
+    }
+
+    public int getDoneRidesNumber() {
+        return doneRidesNumber;
+    }
+
+    public void setDoneRidesNumber(int doneRidesNumber) {
+        this.doneRidesNumber = doneRidesNumber;
     }
 
     @Override

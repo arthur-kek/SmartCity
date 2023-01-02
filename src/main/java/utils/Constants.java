@@ -17,5 +17,10 @@ public class Constants {
 
     public static final int CRITICAL_BATTERY_LEVEL = 30;
 
-    public static final int SEND_STATISTIC_FREQUENCY = 15000;
+    public static final int SEND_STATISTIC_FREQUENCY_TIME = 2000;
+
+    public static final int PM_BUFFER_WINDOW_OVERLAP = 50;
+
+    public static final int PM_BUFFER_WINDOW_SIZE = 8;
+
 }
