@@ -28,7 +28,7 @@ public class RegistrationService extends Thread {
             taxi.setId(newTaxi.getTaxi().getId());
             taxi.setPort(newTaxi.getTaxi().getPort());
             taxi.setPosition(new DSPosition(newTaxi.getTaxi().getPosition()));
-            taxi.setBatteryLevel(newTaxi.getTaxi().getBattery_lvl());
+            taxi.setBatteryLevel(100);
 
             List<DSTaxi> otherTaxis = Stream.of(newTaxi.getOtherTaxis())
                     .map(DSTaxi::new)

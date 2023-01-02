@@ -40,8 +40,9 @@ public class StatisticService {
 
     @POST
     @Path("push/{id}")
-    @Consumes({"application/json"})
-    public Response pushStatistics(@PathParam("id") int taxiId, Statistics statistic) {
+    @Consumes({"application/json", "application/xml"})
+    @Produces({"application/json", "application/xml"})
+    public Response pushStatistics(@PathParam("id") int taxiId, Statistic statistic) {
         //Statistics.getInstance().addStatistic(taxiId, statistic);
         System.out.println("RECEIVED NEW STATISTICS FROM TAXI ID " + taxiId + "\n");
         System.out.println(statistic.toString());

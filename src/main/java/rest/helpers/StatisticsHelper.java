@@ -26,7 +26,7 @@ public class StatisticsHelper {
             totalKm += statistic.getTraveledKm();
             totalBattery += statistic.getBatteryLvl();
             totalRides += statistic.getDoneRidesNumber();
-            totalPm += 1; //calculateAveragePmValue(statistic.getPollutionList());
+            totalPm += calculateAveragePmValue(statistic.getPollutionList());
         }
 
         return new AdmClientResponse(

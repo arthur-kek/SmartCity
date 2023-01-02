@@ -4,7 +4,6 @@ import javax.xml.bind.annotation.*;
 import java.util.List;
 
 @XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Statistic {
 
     private double traveledKm;
@@ -68,7 +67,7 @@ public class Statistic {
     private String getPMList() {
         String s = "";
         for (Double d : pollutionList) {
-            s.concat(d + "|");
+            s = s.concat(d + "|");
         }
         return s;
     }

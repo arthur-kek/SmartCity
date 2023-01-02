@@ -1,10 +1,7 @@
 package core.wrappers;
 
 import com.sun.jersey.api.client.*;
-import rest.beans.Position;
-import rest.beans.Statistic;
-import rest.beans.Taxi;
-import rest.beans.Taxis;
+import rest.beans.*;
 import rest.beans.responses.AdmClientResponse;
 import rest.beans.responses.TaxiResponse;
 
