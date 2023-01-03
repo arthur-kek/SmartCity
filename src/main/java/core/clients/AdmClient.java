@@ -71,7 +71,7 @@ class AdmClient {
     }
 
     private static void exit() {
-        System.out.println("\nSERVER IS SHUTTING DOWN...\n");
+        System.out.println("\nADM CLIENT IS SHUTTING DOWN...\n");
     }
 
     private static Command parseCommand(String line) {

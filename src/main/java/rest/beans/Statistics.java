@@ -40,6 +40,11 @@ public class Statistics {
 
     public synchronized void addStatistic(int taxiId, Statistic statistic) {
         List<Statistic> tmp = statisticMap.get(taxiId);
+        if (tmp == null) {
+            tmp = new ArrayList<>();
+            tmp.add(statistic);
+            statisticMap.put(taxiId, tmp);
+        }
         tmp.add(statistic);
         statisticMap.put(taxiId, tmp);
     }

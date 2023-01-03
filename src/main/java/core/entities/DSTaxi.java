@@ -8,6 +8,7 @@ import core.wrappers.RESTWrapper;
 import grpc.protocols.TaxiProtocolOuterClass;
 import rest.beans.Taxi;
 import utils.Constants;
+import utils.PositionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,7 @@ public class DSTaxi {
     private DSPosition position;
     private double traveledKM;
     private int doneRidesNumber;
+    private String currentTopic;
 
     private List<Double> averagePollution = new ArrayList<>();
     private TaxiState state = TaxiState.FREE;
@@ -34,6 +36,8 @@ public class DSTaxi {
     private SensorService sensorService;
     private QuitService quitService;
     private PushStatisticsService pushStatisticsService;
+    private ManualRechargeService manualRechargeService;
+    private RideListenerService rideListenerService;
 
     private final Object lockExit = new Object();
     private final Object lockCharging = new Object();
@@ -88,22 +92,35 @@ public class DSTaxi {
                 .forEach(other -> this.otherTaxis.add(new DSTaxi(other)));
     }
 
-    public void ride(int distance) throws InterruptedException {
-        state = TaxiState.ON_ROAD;
+    public void makeRide(DSRide ride) throws InterruptedException {
+        if(state == TaxiState.LOW_BATTERY || state == TaxiState.CHARGING) {
 
-        Thread.sleep(5000);
+        } else {
+            state = TaxiState.ON_ROAD;
 
-        decreaseBatteryLevel(distance);
+            Thread.sleep(Constants.RIDE_EXECUTION_TIME);
 
-        state = TaxiState.FREE;
+            System.out.println("ON RIDE\n");
+
+            int distance = (int) PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination());
+            String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
+            decreaseBatteryLevel(distance);
+
+            if (!currentTopic.equals(newTopic)) {
+                currentTopic = newTopic;
+                System.out.println("CHENGE TOPIC\n");
+                startRideListenerService();
+            }
+            System.out.println("RIDE DONE\n");
+            state = TaxiState.FREE;
+        }
     }
 
     public void recharge() {
         state = TaxiState.CHARGING;
-
         try {
             System.out.printf("TAXI ID %d IS GOING TO CHARGE%n", this.id);
-            Thread.sleep(10000);
+            Thread.sleep(Constants.FULL_CHARGING_TIME);
         } catch (InterruptedException ie) {
             System.out.printf("TAXI ID %d CHARGE ERROR%n", this.id);
         } finally {
@@ -111,10 +128,6 @@ public class DSTaxi {
             System.out.printf("TAXI ID %d IS FULLY CHARGED%n", this.id);
             state = TaxiState.FREE;
         }
-    }
-
-    public void updatePosition(DSPosition newPosition) {
-        this.position = newPosition;
     }
 
     // Region exit
@@ -141,6 +154,7 @@ public class DSTaxi {
     public void decreaseBatteryLevel(int points) {
         this.batteryLevel -= points;
         if (batteryLevel <= Constants.CRITICAL_BATTERY_LEVEL) {
+            state = TaxiState.LOW_BATTERY;
             recharge();
         }
     }
@@ -174,17 +188,30 @@ public class DSTaxi {
     private void startAllServices() throws InterruptedException {
         startQuitService();
         startTaxiService();
+        startManualRechargeService();
         startRegistrationService();
+        startPushStatisticsService();
         startHelloService();
         startSensorService();
-        startPushStatisticsService();
+        startRideListenerService();
         waitExitCall();
+    }
+
+    private void startRideListenerService() throws InterruptedException {
+        rideListenerService = new RideListenerService(this, currentTopic);
+        rideListenerService.start();
+        rideListenerService.join();
     }
 
     private void startTaxiService() throws InterruptedException {
         taxiService = new TaxiService(this);
         taxiService.start();
         taxiService.join();
+    }
+
+    private void startManualRechargeService() throws InterruptedException {
+        manualRechargeService = new ManualRechargeService(this);
+        manualRechargeService.start();
     }
 
     private void startSensorService() throws InterruptedException {
@@ -298,6 +325,14 @@ public class DSTaxi {
 
     public void setDoneRidesNumber(int doneRidesNumber) {
         this.doneRidesNumber = doneRidesNumber;
+    }
+
+    public String getCurrentTopic() {
+        return currentTopic;
+    }
+
+    public void setCurrentTopic(String currentTopic) {
+        this.currentTopic = currentTopic;
     }
 
     @Override

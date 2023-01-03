@@ -19,8 +19,26 @@ public class Constants {
 
     public static final int SEND_STATISTIC_FREQUENCY_TIME = 15000;
 
+    public static final int RIDE_GENERATION_FREQUENCY_TIME = 5000;
+
+    public static final int RIDE_EXECUTION_TIME = 5000;
+
+    public static final int FULL_CHARGING_TIME = 10000;
+
     public static final int PM_BUFFER_WINDOW_OVERLAP = 50;
 
     public static final int PM_BUFFER_WINDOW_SIZE = 8;
+
+    public static final int DEFAULT_QOS = 2;
+
+    public static final String TOPIC_ONE = "seta/smartcity/rides/district1";
+
+    public static final String TOPIC_TWO = "seta/smartcity/rides/district2";
+
+    public static final String TOPIC_THREE = "seta/smartcity/rides/district3";
+
+    public static final String TOPIC_FOUR = "seta/smartcity/rides/district4";
+
+    public static final String BASIC_TOPIC = "seta/smartcity/rides/*";
 
 }
