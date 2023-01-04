@@ -31,6 +31,8 @@ public class Constants {
 
     public static final int DEFAULT_QOS = 2;
 
+    public static final int PING_SLEEP_TIME = 2000;
+
     public static final String TOPIC_ONE = "seta/smartcity/rides/district1";
 
     public static final String TOPIC_TWO = "seta/smartcity/rides/district2";

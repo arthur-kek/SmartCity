@@ -13,8 +13,17 @@ message HelloResponse {
  string message = 1;
 }
 
+message PingRequest{
+  string message = 1;
+}
+
+message PingResponse{
+  int32 id = 1;
+}
+
 service TaxiProtocol {
   rpc sayHello(HelloRequest) returns (HelloResponse);
+  rpc ping(PingRequest) returns (PingResponse);
 }
 
 

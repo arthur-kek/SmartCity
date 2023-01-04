@@ -1,5 +1,6 @@
 package core.entities;
 
+import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import core.enums.District;
 import core.enums.TaxiState;
@@ -38,6 +39,7 @@ public class DSTaxi {
     private PushStatisticsService pushStatisticsService;
     private ManualRechargeService manualRechargeService;
     private RideListenerService rideListenerService;
+    private PingService pingService;
 
     private final Object lockExit = new Object();
     private final Object lockCharging = new Object();
@@ -193,6 +195,7 @@ public class DSTaxi {
         startPushStatisticsService();
         startHelloService();
         startSensorService();
+        startPingService();
         startRideListenerService();
         waitExitCall();
     }
@@ -222,6 +225,11 @@ public class DSTaxi {
     private void startQuitService() {
         quitService = new QuitService(this);
         quitService.start();
+    }
+
+    private void startPingService() {
+        pingService = new PingService(this);
+        pingService.start();
     }
 
     private void startRegistrationService() throws InterruptedException {
@@ -333,6 +341,16 @@ public class DSTaxi {
 
     public void setCurrentTopic(String currentTopic) {
         this.currentTopic = currentTopic;
+    }
+
+    public void removeDeadTaxi(int id) {
+        Optional<DSTaxi> deadTaxi = Stream.of(otherTaxis)
+                .filter(taxi -> taxi.id == id)
+                .findFirst();
+
+        if (deadTaxi.isPresent()) {
+            otherTaxis.remove(deadTaxi.get());
+        }
     }
 
     @Override
