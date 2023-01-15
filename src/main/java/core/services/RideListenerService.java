@@ -16,11 +16,13 @@ public class RideListenerService extends Thread {
 
     private String topic;
     private DSTaxi taxi;
+    private String previousTopic;
 
-    public RideListenerService(DSTaxi taxi, String topic) {
+    public RideListenerService(DSTaxi taxi, String topic, String previousTopic) {
         this.taxi = taxi;
         this.clientID = MqttClient.generateClientId();
         this.topic = topic;
+        this.previousTopic = previousTopic;
     }
 
     private void setUp() throws MqttException {
@@ -35,7 +37,7 @@ public class RideListenerService extends Thread {
                 try {
                     DSRide ride = new DSRide(RideOuterClass.Ride.parseFrom(message.getPayload()));
                     taxi.makeRide(ride);
-                    System.out.printf("%s NEW RIDE ARRIVED:\n%s%n", SERVICE_NAME, ride);
+                    //System.out.printf("%s NEW RIDE ARRIVED:\n%s%n", SERVICE_NAME, ride);
                 } catch (Throwable t) {
                     System.out.printf("%s RIDE ERROR", SERVICE_NAME);
                 }
@@ -56,7 +58,9 @@ public class RideListenerService extends Thread {
     }
 
     private void unsubscribe() throws MqttException {
-        mqttClient.unsubscribe(Constants.BASIC_TOPIC);
+        if (previousTopic != null) {
+            mqttClient.unsubscribe(previousTopic);
+        }
     }
 
     public void initConnection() throws MqttException {
@@ -71,7 +75,6 @@ public class RideListenerService extends Thread {
     public void run() {
         try {
             System.out.println(SERVICE_NAME + " STARTED");
-
             initConnection();
         } catch (Throwable t) {
             System.out.println(SERVICE_NAME + " GENERIC ERROR");

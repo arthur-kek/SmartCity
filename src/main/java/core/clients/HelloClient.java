@@ -53,6 +53,7 @@ public class HelloClient extends Thread {
                         .setX(mainTaxi.getPosition().getX())
                         .setY(mainTaxi.getPosition().getY())
                         .build())
+                .setIsMaster(mainTaxi.isMaster())
                 .build();
     }
 

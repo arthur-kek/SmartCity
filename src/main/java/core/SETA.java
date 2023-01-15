@@ -2,6 +2,7 @@ package core;
 
 import core.entities.DSPosition;
 import core.entities.DSRide;
+import core.enums.District;
 import core.exceptions.InvalidRide;
 import grpc.protocols.PositionOuterClass;
 import grpc.protocols.RideOuterClass;
@@ -16,10 +17,19 @@ public class SETA {
 
     private MqttClient mqttClient;
 
+    private int districtOneCounter;
+    private int districtTwoCounter;
+    private int districtThreeCounter;
+    private int districtFourCounter;
+
     public SETA() throws MqttException {
         mqttClient = createMQTTClient();
         this.setUp();
         this.setCallback();
+        this.districtOneCounter = 0;
+        this.districtTwoCounter = 0;
+        this.districtThreeCounter = 0;
+        this.districtFourCounter = 0;
     }
 
     private MqttClient createMQTTClient() throws MqttException {
@@ -41,14 +51,16 @@ public class SETA {
         }
     }
 
-    private void setCallback(){
+    private void setCallback() {
         mqttClient.setCallback(new MqttCallback() {
             public void messageArrived(String topic, MqttMessage message) {
 
             }
+
             public void connectionLost(Throwable t) {
                 System.out.println("CONNECTION LOST");
             }
+
             public void deliveryComplete(IMqttDeliveryToken token) {
                 if (token.isComplete()) {
                     System.out.println("RIDE IS COMPLETED");
@@ -60,14 +72,41 @@ public class SETA {
     // Generates two rides each 5 seconds
     public void createNewRides() throws MqttException {
         try {
+            // TODO generate two rides
             DSRide ride = new DSRide();
+            int id = generateNewId(ride);
+            ride.setId(id);
             publishRide(ride);
-            DSRide ride2 = new DSRide();
-            publishRide(ride2);
+           /* DSRide ride2 = new DSRide();
+            publishRide(ride2);*/
 
         } catch (InvalidRide e) {
             System.out.printf("%s INVALID RIDE", SERVICE_NAME);
         }
+    }
+
+    private int generateNewId(DSRide ride) {
+        int temp;
+        District district = PositionUtils.getDistrictByPosition(ride.getStart());
+        switch (district) {
+            case ONE:
+                temp = district.getValue() * 1000 + districtOneCounter;
+                districtOneCounter++;
+                return temp;
+            case TWO:
+                temp = district.getValue() * 1000 + districtTwoCounter;
+                districtTwoCounter++;
+                return temp;
+            case THREE:
+                temp = district.getValue() * 1000 + districtThreeCounter;
+                districtThreeCounter++;
+                return temp;
+            case FOUR:
+                temp = district.getValue() * 1000 + districtFourCounter;
+                districtFourCounter++;
+                return temp;
+        }
+        return -1;
     }
 
     private void publishRide(DSRide ride) throws MqttException {
@@ -76,16 +115,30 @@ public class SETA {
         String topic = getRideTopic(ride.getStart());
         mqttClient.publish(topic, message);
 
-        System.out.printf("NEW RIDE CREATED ON %s%n", topic);
+        switch (topic) {
+            case Constants.TOPIC_ONE:
+                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 1000 + districtOneCounter, topic);
+                break;
+            case Constants.TOPIC_TWO:
+                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 2000 + districtTwoCounter, topic);
+                break;
+            case Constants.TOPIC_THREE:
+                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 3000 + districtThreeCounter, topic);
+                break;
+            case Constants.TOPIC_FOUR:
+                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 4000 + districtFourCounter, topic);
+                break;
+        }
+
     }
 
     public String getRideTopic(DSPosition p) {
         return PositionUtils.getTopicByPosition(p);
     }
 
-    public static byte[] buildRideMessage(DSRide ride){
-       return RideOuterClass.Ride.newBuilder()
-                .setId(ride.getId().toString())
+    public static byte[] buildRideMessage(DSRide ride) {
+        return RideOuterClass.Ride.newBuilder()
+                .setId(ride.getId())
                 .setStart(PositionOuterClass.Position.newBuilder()
                         .setY(ride.getStart().getX())
                         .setY(ride.getStart().getY())

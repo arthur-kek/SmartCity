@@ -2,18 +2,18 @@ package core.enums;
 
 public enum District {
 
-    ONE("1"),
-    TWO("2"),
-    THREE("3"),
-    FOUR("4");
+    ONE(1),
+    TWO(2),
+    THREE(3),
+    FOUR(4);
 
-    private final String value;
+    private final int value;
 
-    District(String value) {
+    District(int value) {
         this.value = value;
     }
 
-    public String getValue() {
+    public int getValue() {
         return value;
     }
 }

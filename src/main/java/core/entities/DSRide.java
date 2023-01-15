@@ -8,8 +8,7 @@ import java.util.Random;
 import java.util.UUID;
 
 public class DSRide {
-
-    private UUID id;
+    private int id;
     private DSPosition start;
     private DSPosition destination;
 
@@ -26,19 +25,22 @@ public class DSRide {
             throw new InvalidRide();
         }
 
-        this.id = UUID.randomUUID();
         this.start = startingPoint;
         this.destination = destinationPoint;
     }
 
     public DSRide(RideOuterClass.Ride ride) {
-        this.id = UUID.fromString(ride.getId());
+        this.id = ride.getId();
         this.start = new DSPosition(ride.getStart());
         this.destination = new DSPosition(ride.getDestination());
     }
 
-    public UUID getId() {
+    public int getId() {
         return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public DSPosition getStart() {

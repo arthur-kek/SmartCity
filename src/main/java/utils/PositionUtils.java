@@ -1,6 +1,10 @@
 package utils;
 
+import core.entities.DSChargingStation;
 import core.entities.DSPosition;
+import core.enums.ChargingStation;
+import core.enums.District;
+import core.wrappers.ChargingStations;
 
 public class PositionUtils {
 
@@ -22,6 +26,27 @@ public class PositionUtils {
                 return Constants.TOPIC_FOUR;
             }
         }
+    }
+
+    public static District getDistrictByPosition(DSPosition position) {
+        if (position.getX() < 5) {
+            if (position.getY() < 5) {
+                return District.ONE;
+            } else {
+                return District.THREE;
+            }
+        } else {
+            if (position.getY() < 5) {
+                return District.TWO;
+            } else {
+                return District.FOUR;
+            }
+        }
+    }
+
+    public static DSChargingStation getChargingStationByPosition(DSPosition position) {
+        ChargingStation station = ChargingStation.getByPosition(position);
+        return ChargingStations.getByEnum(station);
     }
 
 }

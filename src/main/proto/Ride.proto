@@ -3,7 +3,7 @@ import "Position.proto";
 package grpc.protocols;
 
 message Ride {
-  string id = 1;
+  int32 id = 1;
   Position start = 2;
   Position destination = 3;
 }

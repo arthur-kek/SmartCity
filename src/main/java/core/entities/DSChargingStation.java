@@ -1,17 +1,35 @@
 package core.entities;
 
 import core.enums.ChargingStation;
-import core.enums.ChargingStationState;
 
 
 public class DSChargingStation {
 
     private ChargingStation station;
-    private ChargingStationState state;
+    private boolean isBusy;
+    private final Object lockState = new Object();
 
     public DSChargingStation(ChargingStation station) {
         this.station = station;
-        state = ChargingStationState.FREE;
+        isBusy = false;
+    }
+
+    public boolean isBusy() {
+        boolean tmp;
+        synchronized (lockState) {
+            tmp = isBusy;
+        }
+        return tmp;
+    }
+
+    public void updateState(boolean state) {
+        synchronized (lockState) {
+            this.isBusy = state;
+        }
+    }
+
+    public ChargingStation getStation() {
+        return station;
     }
 
 }

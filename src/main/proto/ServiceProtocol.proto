@@ -1,0 +1,31 @@
+syntax = "proto3";
+import "Position.proto";
+package grpc.protocols;
+
+message ChargeResponse {
+  string response = 1;
+  int32 taxiInQueue = 2;
+}
+
+message ChargeRequest {
+  int32 id = 1;
+  int32 port = 2;
+  Position position = 3;
+  string ts = 4;
+}
+
+message ElectRiderRequest {
+  string electionMessage = 1;
+}
+
+message ElectRiderResponse {
+  int32 id = 1;
+  int32 batteryLevel = 2;
+  Position position = 3;
+  int32 districtId = 4;
+}
+
+service ServiceProtocol {
+  rpc askForCharge(ChargeRequest) returns (ChargeResponse);
+  rpc electRider(ElectRiderRequest) returns (ElectRiderResponse);
+}

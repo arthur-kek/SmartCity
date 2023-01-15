@@ -2,13 +2,17 @@ package core.entities;
 
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
-import core.enums.District;
 import core.enums.TaxiState;
+import core.exceptions.ChargeStationException;
+import core.exceptions.WrongTaxiStateException;
 import core.services.*;
+import core.services.masterServices.MasterService;
 import core.wrappers.RESTWrapper;
+import grpc.protocols.ServiceProtocolOuterClass;
 import grpc.protocols.TaxiProtocolOuterClass;
 import rest.beans.Taxi;
 import utils.Constants;
+import utils.LogUtils;
 import utils.PositionUtils;
 
 import java.util.ArrayList;
@@ -26,11 +30,26 @@ public class DSTaxi {
     private double traveledKM;
     private int doneRidesNumber;
     private String currentTopic;
+    private String previousTopic;
+    private boolean isMaster;
+    private DSChargingStation currentStation;
 
     private List<Double> averagePollution = new ArrayList<>();
     private TaxiState state = TaxiState.FREE;
     private List<DSTaxi> otherTaxis = new ArrayList<>();
-    private District district;
+
+    private final Object lockKmTraveled = new Object();
+    private final Object lockBatteryLevel = new Object();
+    private final Object lockDoneRidesNumber = new Object();
+    private final Object lockCurrentStation = new Object();
+    private final Object lockAveragePollution = new Object();
+    private final Object lockState = new Object();
+    private final Object lockOtherTaxis = new Object();
+    private final Object lockCurrentTopic = new Object();
+    private final Object lockPosition = new Object();
+    private final Object lockMaster = new Object();
+    private final Object lockExit = new Object();
+
     private TaxiService taxiService;
     private RegistrationService registrationService;
     private HelloService helloService;
@@ -40,15 +59,9 @@ public class DSTaxi {
     private ManualRechargeService manualRechargeService;
     private RideListenerService rideListenerService;
     private PingService pingService;
-
-    private final Object lockExit = new Object();
-    private final Object lockCharging = new Object();
-
-    public void dropAllStatistics() {
-        this.traveledKM = 0;
-        this.doneRidesNumber = 0;
-        averagePollution.clear();
-    }
+    private ChargeRequestService chargeRequestService;
+    private MasterService masterService;
+    private MasterElectionService masterElectionService;
 
     public DSTaxi(int id, int port, String serverAddress, DSPosition position, TaxiState state, List<DSTaxi> otherTaxis) {
         this.id = id;
@@ -58,6 +71,7 @@ public class DSTaxi {
         this.position = position;
         this.state = state;
         this.otherTaxis = otherTaxis;
+        this.currentStation = PositionUtils.getChargingStationByPosition(position);
     }
 
     public DSTaxi(int id, int port, String serverAddress) {
@@ -81,6 +95,16 @@ public class DSTaxi {
         this.serverAddress = r.getIpAddress();
         this.batteryLevel = Constants.FULL_BATTERY_LEVEL;
         this.position = new DSPosition(r.getPosition().getX(), r.getPosition().getY());
+        this.isMaster = r.getIsMaster();
+        this.currentStation = PositionUtils.getChargingStationByPosition(this.position);
+    }
+
+    public DSTaxi(ServiceProtocolOuterClass.ChargeRequest r) {
+        this.id = r.getId();
+        this.port = r.getPort();
+        this.position = new DSPosition(r.getPosition().getX(), r.getPosition().getY());
+        this.serverAddress = Constants.ADM_SERVER_ADDRESS;
+        this.currentStation = PositionUtils.getChargingStationByPosition(this.position);
     }
 
     public DSTaxi(Taxi t, List<Taxi> otherTaxis) {
@@ -92,47 +116,90 @@ public class DSTaxi {
         this.state = TaxiState.FREE;
         Stream.of(otherTaxis)
                 .forEach(other -> this.otherTaxis.add(new DSTaxi(other)));
+        this.currentStation = PositionUtils.getChargingStationByPosition(this.position);
     }
 
+    /*
+        If this taxi win the election it makes a ride
+    */
     public void makeRide(DSRide ride) throws InterruptedException {
-        if(state == TaxiState.LOW_BATTERY || state == TaxiState.CHARGING) {
+        if (getState() == TaxiState.FREE) {
+            try {
+                updateTaxiState(TaxiState.ON_ROAD);
+                System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+                Thread.sleep(Constants.RIDE_EXECUTION_TIME);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } finally {
+                System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
 
-        } else {
-            state = TaxiState.ON_ROAD;
+                int distance = (int) (PositionUtils.CalculateDistance(getPosition(), ride.getStart())
+                        + PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination()));
 
-            Thread.sleep(Constants.RIDE_EXECUTION_TIME);
+                updateStatistics(distance, true);
+                updatePosition(ride.getDestination());
+                updateCurrentStation(PositionUtils.getChargingStationByPosition(getPosition()));
 
-            System.out.println("ON RIDE\n");
+                String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
+                decreaseBatteryLevel(distance);
 
-            int distance = (int) PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination());
-            String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
-            decreaseBatteryLevel(distance);
-
-            if (!currentTopic.equals(newTopic)) {
-                currentTopic = newTopic;
-                System.out.println("CHENGE TOPIC\n");
-                startRideListenerService();
+                if (!getCurrentTopic().equals(newTopic)) {
+                    previousTopic = currentTopic;
+                    updateCurrentTopic(newTopic);
+                    System.out.println("CHANGE TOPIC\n");
+                    startRideListenerService();
+                }
+                updateTaxiState(TaxiState.FREE);
             }
-            System.out.println("RIDE DONE\n");
-            state = TaxiState.FREE;
         }
     }
 
-    public void recharge() {
-        state = TaxiState.CHARGING;
-        try {
-            System.out.printf("TAXI ID %d IS GOING TO CHARGE%n", this.id);
+    /*
+        ChargeManagementService notifies this taxi to recharge
+    */
+    public void recharge() throws ChargeStationException, WrongTaxiStateException, InterruptedException {
+        if (getCurrentStation().isBusy()) {
+            throw new ChargeStationException();
+        }
+        if (getState() != TaxiState.LOW_BATTERY) {
+            throw new WrongTaxiStateException(state, TaxiState.LOW_BATTERY);
+        } else {
+            getCurrentStation().updateState(true);
+            updateTaxiState(TaxiState.CHARGING);
+            System.out.printf("TAXI ID %d IS GOING TO A RECHARGE ON %s%n", this.id, LogUtils.getCurrentTS());
+            DSPosition newPosition = getCurrentStationPosition();
+            int distance = calculateDistance(newPosition);
+            updateStatistics(distance, false);
+
             Thread.sleep(Constants.FULL_CHARGING_TIME);
-        } catch (InterruptedException ie) {
-            System.out.printf("TAXI ID %d CHARGE ERROR%n", this.id);
-        } finally {
-            this.batteryLevel = Constants.FULL_BATTERY_LEVEL;
-            System.out.printf("TAXI ID %d IS FULLY CHARGED%n", this.id);
-            state = TaxiState.FREE;
+            updateBatteryLevel(Constants.FULL_BATTERY_LEVEL, true);
+            getCurrentStation().updateState(false);
+
+            System.out.printf("TAXI ID %d IS FULLY CHARGED %s%n", this.id, LogUtils.getCurrentTS());
+            updatePosition(newPosition);
+            updateTaxiState(TaxiState.FREE);
         }
     }
 
-    // Region exit
+    /*
+        If battery level reaches critical region taxi starts chargeRequestService that will notify ChargeManagementService about it
+    */
+    public void decreaseBatteryLevel(int points) throws InterruptedException {
+        updateBatteryLevel(points, false);
+        if (getBatteryLevel() <= Constants.CRITICAL_BATTERY_LEVEL) {
+            updateTaxiState(TaxiState.LOW_BATTERY);
+            startChargeRequestService();
+        }
+    }
+
+    public void dropAllStatistics() {
+        updateKmTraveled(0, true);
+        updateDoneRidesNumber(true);
+        resetAveragePollution();
+    }
+
+    /* region exit */
+
     public void leaveNetwork() throws InterruptedException {
         synchronized (lockExit) {
             state = TaxiState.QUITTING;
@@ -144,22 +211,85 @@ public class DSTaxi {
     private void leaveAdmServer() {
         boolean response = RESTWrapper.getInstance().deleteTaxi(Constants.ADM_SERVER_ADDRESS, this.id);
         if (response) {
-            System.out.printf("TAXI ID %d WAS SUCCESSFULLY DELETED FROM NETWORK%n", this.id);
+            printError("TAXI ID %d WAS SUCCESSFULLY DELETED FROM NETWORK%n");
         } else {
-            System.out.printf("ERROR DELETING TAXI ID %d FROM NETWORK%n", this.id);
+            printError("ERROR DELETING TAXI ID %d FROM NETWORK%n");
         }
     }
 
-    // End region
+    /* end region */
 
 
-    public void decreaseBatteryLevel(int points) {
-        this.batteryLevel -= points;
-        if (batteryLevel <= Constants.CRITICAL_BATTERY_LEVEL) {
-            state = TaxiState.LOW_BATTERY;
-            recharge();
+    /* region updates */
+
+    private void updateStatistics(int km, boolean didRide) {
+        updateKmTraveled(km, false);
+        if (didRide) {
+            updateDoneRidesNumber(false);
         }
     }
+
+    private void updateMaster(boolean isMaster) {
+        synchronized (lockMaster) {
+            this.isMaster = isMaster;
+        }
+    }
+
+    public void updateBatteryLevel(int points, boolean wipe) {
+        synchronized (lockBatteryLevel) {
+            if (wipe) {
+                this.batteryLevel = points;
+            } else {
+                this.batteryLevel -= points;
+            }
+        }
+    }
+
+    private void updateTaxiState(TaxiState state) {
+        synchronized (lockState) {
+            this.state = state;
+        }
+    }
+
+    private void updateKmTraveled(double km, boolean wipe) {
+        synchronized (lockKmTraveled) {
+            if (wipe) {
+                this.traveledKM = 0;
+            } else {
+                this.traveledKM += km;
+            }
+        }
+    }
+
+    private void updateDoneRidesNumber(boolean wipe) {
+        synchronized (lockDoneRidesNumber) {
+            if (wipe) {
+                doneRidesNumber = 0;
+            } else {
+                doneRidesNumber = +1;
+            }
+        }
+    }
+
+    public void updatePosition(DSPosition position) {
+        synchronized (lockPosition) {
+            this.position = position;
+        }
+    }
+
+    private void updateCurrentStation(DSChargingStation station) {
+        synchronized (lockCurrentStation) {
+            this.currentStation = station;
+        }
+    }
+
+    public void updateCurrentTopic(String topic) {
+        synchronized (lockCurrentTopic) {
+            this.currentTopic = topic;
+        }
+    }
+
+    /* end region */
 
     public void waitExitCall() throws InterruptedException {
         synchronized (lockExit) {
@@ -201,7 +331,7 @@ public class DSTaxi {
     }
 
     private void startRideListenerService() throws InterruptedException {
-        rideListenerService = new RideListenerService(this, currentTopic);
+        rideListenerService = new RideListenerService(this, getCurrentTopic(), previousTopic);
         rideListenerService.start();
         rideListenerService.join();
     }
@@ -220,6 +350,18 @@ public class DSTaxi {
     private void startSensorService() throws InterruptedException {
         sensorService = new SensorService(this);
         sensorService.start();
+    }
+
+    private void startChargeRequestService() throws InterruptedException {
+        chargeRequestService = new ChargeRequestService(this);
+        chargeRequestService.start();
+        chargeRequestService.join();
+    }
+
+    private void startMasterElectionService() throws InterruptedException {
+        masterElectionService = new MasterElectionService(this);
+        masterElectionService.start();
+        masterElectionService.join();
     }
 
     private void startQuitService() {
@@ -249,18 +391,45 @@ public class DSTaxi {
         pushStatisticsService.start();
     }
 
-    // End region
+    private void startMasterService() throws InterruptedException {
+        masterService = new MasterService(this);
+        masterService.start();
+        masterService.join();
+    }
 
+    public void electMaster() throws InterruptedException {
+        if (!getOtherTaxis().isEmpty()) {
+            startMasterElectionService();
+        }
+    }
+
+    // End region
     public void addNewTaxi(DSTaxi taxi) {
-        this.otherTaxis.add(taxi);
+        synchronized (lockOtherTaxis) {
+            this.otherTaxis.add(taxi);
+        }
     }
 
     public List<DSTaxi> getOtherTaxis() {
-        return otherTaxis;
+        List<DSTaxi> tmp;
+        synchronized (lockOtherTaxis) {
+            tmp = otherTaxis;
+        }
+        return tmp;
     }
 
     public void setOtherTaxis(List<DSTaxi> otherTaxis) {
-        this.otherTaxis = otherTaxis;
+        synchronized (lockOtherTaxis) {
+            this.otherTaxis = otherTaxis;
+            if (otherTaxis.isEmpty()) {
+                updateMaster(true);
+                try {
+                    startMasterService();
+                } catch (InterruptedException ie) {
+                    printError("ERROR STARTING MASTER SERVICE FOR TAXI ID %d%n");
+                }
+            }
+        }
     }
 
     public int getId() {
@@ -283,73 +452,151 @@ public class DSTaxi {
         return serverAddress;
     }
 
-    public void setServerAddress(String serverAddress) {
-        this.serverAddress = serverAddress;
-    }
-
     public int getBatteryLevel() {
-        return batteryLevel;
-    }
-
-    public void setBatteryLevel(int batteryLevel) {
-        this.batteryLevel = batteryLevel;
+        int tmp;
+        synchronized (lockBatteryLevel) {
+            tmp = batteryLevel;
+        }
+        return tmp;
     }
 
     public DSPosition getPosition() {
-        return position;
+        DSPosition tmp;
+        synchronized (lockPosition) {
+            tmp = position;
+        }
+        return tmp;
     }
 
     public void setPosition(DSPosition position) {
         this.position = position;
+        this.currentStation = PositionUtils.getChargingStationByPosition(position);
     }
 
     public TaxiState getState() {
-        return state;
+        TaxiState tmp;
+        synchronized (lockState) {
+            tmp = state;
+        }
+        return tmp;
     }
 
     public void setState(TaxiState state) {
-        this.state = state;
+        synchronized (lockState) {
+            this.state = state;
+        }
     }
 
     public List<Double> getAveragePollution() {
-        return averagePollution;
+        List<Double> tmp;
+        synchronized (lockAveragePollution) {
+            tmp = averagePollution;
+        }
+        return tmp;
     }
 
     public void addPollutionAvg(double value) {
-        this.averagePollution.add(value);
+        synchronized (lockAveragePollution) {
+            this.averagePollution.add(value);
+        }
+    }
+
+    private void resetAveragePollution() {
+        synchronized (lockAveragePollution) {
+            this.averagePollution.clear();
+        }
     }
 
     public double getTraveledKM() {
-        return traveledKM;
-    }
-
-    public void setTraveledKM(double traveledKM) {
-        this.traveledKM = traveledKM;
+        double tmp;
+        synchronized (lockKmTraveled) {
+            tmp = traveledKM;
+        }
+        return tmp;
     }
 
     public int getDoneRidesNumber() {
-        return doneRidesNumber;
-    }
-
-    public void setDoneRidesNumber(int doneRidesNumber) {
-        this.doneRidesNumber = doneRidesNumber;
+        int tmp;
+        synchronized (lockDoneRidesNumber) {
+            tmp = doneRidesNumber;
+        }
+        return tmp;
     }
 
     public String getCurrentTopic() {
-        return currentTopic;
+        String tmp;
+        synchronized (lockCurrentTopic) {
+            tmp = currentTopic;
+        }
+        return tmp;
     }
 
     public void setCurrentTopic(String currentTopic) {
-        this.currentTopic = currentTopic;
+        synchronized (lockCurrentTopic) {
+            this.currentTopic = currentTopic;
+        }
+    }
+
+    public DSChargingStation getCurrentStation() {
+        DSChargingStation tmp;
+        synchronized (lockCurrentStation) {
+            tmp = currentStation;
+        }
+        return tmp;
+    }
+
+    private DSPosition getCurrentStationPosition() {
+        DSPosition tmp;
+        synchronized (lockCurrentStation) {
+            tmp = currentStation.getStation().getPosition();
+        }
+        return tmp;
+    }
+
+    private int calculateDistance(DSPosition newPosition) {
+        DSPosition tmp;
+        synchronized (lockPosition) {
+            tmp = position;
+        }
+        return (int) PositionUtils.CalculateDistance(tmp, newPosition);
+    }
+
+    public boolean isMaster() {
+        boolean tmp;
+        synchronized (lockMaster) {
+            tmp = isMaster;
+        }
+        return tmp;
+    }
+
+    public void setMaster() {
+        synchronized (lockMaster) {
+            if (!isMaster) {
+                isMaster = true;
+            }
+        }
+        if (masterService != null) {
+            try {
+                startMasterService();
+            } catch (InterruptedException ie) {
+                printError("ERROR STARTING MASTER SERVICE FOR TAXI ID %d%n");
+            }
+        }
+    }
+
+    private void printError(String format) {
+        System.out.printf(format, this.id);
     }
 
     public void removeDeadTaxi(int id) {
-        Optional<DSTaxi> deadTaxi = Stream.of(otherTaxis)
-                .filter(taxi -> taxi.id == id)
-                .findFirst();
+        synchronized (lockOtherTaxis) {
+            Optional<DSTaxi> deadTaxi = Stream.of(otherTaxis)
+                    .filter(taxi -> taxi.id == id)
+                    .findFirst();
 
-        if (deadTaxi.isPresent()) {
-            otherTaxis.remove(deadTaxi.get());
+            if (deadTaxi.isPresent()) {
+                otherTaxis.remove(deadTaxi.get());
+            }
         }
     }
 

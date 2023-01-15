@@ -89,7 +89,7 @@ public class RESTWrapper {
     }
 
     public void pushStatistics(String serverAddress, int taxiID, Statistic statistic) {
-        System.out.printf("PUSHING STATISTICS FOR %d ON %s%n", taxiID, serverAddress);
+        //System.out.printf("PUSHING STATISTICS FOR %d ON %s%n", taxiID, serverAddress);
         try {
             ClientResponse response = webClient
                     .resource(serverAddress + "statistics/push/" + taxiID)

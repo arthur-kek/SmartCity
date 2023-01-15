@@ -1,6 +1,7 @@
 package core.enums;
 
 import core.entities.DSPosition;
+import core.wrappers.ChargingStations;
 import utils.Constants;
 
 import java.util.Optional;
@@ -32,6 +33,14 @@ public enum ChargingStation {
     public static ChargingStation get(int i) {
         Optional<ChargingStation> optional = Stream.of(ChargingStation.values())
                 .filter(cs -> cs.id == i)
+                .findFirst();
+
+        return optional.orElse(null);
+    }
+
+    public static ChargingStation getByPosition(DSPosition p) {
+        Optional<ChargingStation> optional = Stream.of(ChargingStation.values())
+                .filter(cs -> Math.abs(cs.position.getX() - p.getX()) < 5 && Math.abs(cs.position.getY() - p.getY()) < 5)
                 .findFirst();
 
         return optional.orElse(null);

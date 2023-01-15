@@ -1,5 +1,6 @@
 package core.services;
 
+import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
 import core.clients.HelloClient;
 import core.clients.PingClient;
@@ -47,6 +48,14 @@ public class PingService extends Thread {
                                     taxi.removeDeadTaxi(id);
                                 }
                             });
+
+            Optional<DSTaxi> opt = Stream.of(taxi.getOtherTaxis())
+                    .filter(DSTaxi::isMaster)
+                    .findFirst();
+
+            if (opt.isEmpty()) {
+                taxi.electMaster();
+            }
 
 
             sleep(Constants.PING_SLEEP_TIME);
