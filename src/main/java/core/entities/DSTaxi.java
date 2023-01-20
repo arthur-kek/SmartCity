@@ -10,6 +10,7 @@ import core.services.masterServices.MasterService;
 import core.wrappers.RESTWrapper;
 import grpc.protocols.ServiceProtocolOuterClass;
 import grpc.protocols.TaxiProtocolOuterClass;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import rest.beans.Taxi;
 import utils.Constants;
 import utils.LogUtils;
@@ -147,7 +148,12 @@ public class DSTaxi {
                     previousTopic = currentTopic;
                     updateCurrentTopic(newTopic);
                     System.out.println("CHANGE TOPIC\n");
-                    startRideListenerService();
+                    try {
+                        rideListenerService.unsubscribe(previousTopic);
+                        rideListenerService.subscribe(newTopic);
+                    } catch (MqttException e) {
+                        System.out.printf("ERROR SUBSCRIBING TOPIC %s%n", newTopic);
+                    }
                 }
                 updateTaxiState(TaxiState.FREE);
             }
@@ -331,9 +337,8 @@ public class DSTaxi {
     }
 
     private void startRideListenerService() throws InterruptedException {
-        rideListenerService = new RideListenerService(this, getCurrentTopic(), previousTopic);
+        rideListenerService = new RideListenerService(this, getCurrentTopic());
         rideListenerService.start();
-        rideListenerService.join();
     }
 
     private void startTaxiService() throws InterruptedException {

@@ -17,8 +17,7 @@ public class Constants {
 
     public static final int FULL_BATTERY_LEVEL = 100;
 
-    // TODO cambiare
-    public static final int CRITICAL_BATTERY_LEVEL = 95;
+    public static final int CRITICAL_BATTERY_LEVEL = 30;
 
     public static final int SEND_STATISTIC_FREQUENCY_TIME = 15000;
 
@@ -43,7 +42,5 @@ public class Constants {
     public static final String TOPIC_THREE = "seta/smartcity/rides/district3";
 
     public static final String TOPIC_FOUR = "seta/smartcity/rides/district4";
-
-    public static final String BASIC_TOPIC = "seta/smartcity/rides/*";
 
 }

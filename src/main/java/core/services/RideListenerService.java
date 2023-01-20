@@ -16,13 +16,11 @@ public class RideListenerService extends Thread {
 
     private String topic;
     private DSTaxi taxi;
-    private String previousTopic;
 
-    public RideListenerService(DSTaxi taxi, String topic, String previousTopic) {
+    public RideListenerService(DSTaxi taxi, String topic) {
         this.taxi = taxi;
         this.clientID = MqttClient.generateClientId();
         this.topic = topic;
-        this.previousTopic = previousTopic;
     }
 
     private void setUp() throws MqttException {
@@ -52,23 +50,20 @@ public class RideListenerService extends Thread {
         });
     }
 
-    private void subscribe() throws MqttException {
+    public void subscribe(String topic) throws MqttException {
         mqttClient.subscribe(topic, Constants.DEFAULT_QOS);
         System.out.printf("%s MQTT CLIENT SUBSCRIBED ON TOPIC %s%n", SERVICE_NAME, topic);
     }
 
-    private void unsubscribe() throws MqttException {
-        if (previousTopic != null) {
-            mqttClient.unsubscribe(previousTopic);
-        }
+    public void unsubscribe(String topic) throws MqttException {
+             mqttClient.unsubscribe(topic);
     }
 
     public void initConnection() throws MqttException {
         mqttClient = new MqttClient(Constants.BROKER_ADDRESS, clientID, new MemoryPersistence());
         setUp();
         setCallback();
-        unsubscribe();
-        subscribe();
+        subscribe(topic);
     }
 
     @Override
