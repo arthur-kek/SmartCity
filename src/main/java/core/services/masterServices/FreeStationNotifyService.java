@@ -5,7 +5,7 @@ import core.entities.DSTaxi;
 
 public class FreeStationNotifyService extends Thread {
 
-    private final static String SERVICE_NAME = "CHARGE_RESPONSE_SERVICE";
+    private final static String SERVICE_NAME = "FREE_STATION_NOTIFY_SERVICE";
 
     private ChargeManagementService service;
     private DSTaxi taxi;

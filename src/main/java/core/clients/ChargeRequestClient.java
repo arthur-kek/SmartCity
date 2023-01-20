@@ -40,8 +40,8 @@ public class ChargeRequestClient extends Thread {
     }
 
     private void askForCharge() throws InterruptedException {
-        String targetTaxiAddress = String.format("%s:%s", Constants.ADM_SERVER_HOSTNAME, Constants.CHARGE_MANAGER_DEFAULT_PORT);
-        final ManagedChannel channel = ManagedChannelBuilder.forTarget(targetTaxiAddress).usePlaintext().build();
+        String chargeManagerAddress = String.format("%s:%s", Constants.ADM_SERVER_HOSTNAME, Constants.CHARGE_MANAGER_DEFAULT_PORT);
+        final ManagedChannel channel = ManagedChannelBuilder.forTarget(chargeManagerAddress).usePlaintext().build();
         ServiceProtocolGrpc.ServiceProtocolStub stub = ServiceProtocolGrpc.newStub(channel);
 
         ServiceProtocolOuterClass.ChargeRequest request = buildRequest();

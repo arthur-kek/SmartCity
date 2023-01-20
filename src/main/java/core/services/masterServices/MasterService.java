@@ -7,6 +7,7 @@ public class MasterService extends Thread {
     private final static String SERVICE_NAME = "MASTER_SERVICE";
 
     private ChargeManagementService chargeManagementService;
+    private RideManagementService rideManagementService;
     private DSTaxi taxi;
 
     public MasterService(DSTaxi taxi) {
@@ -15,12 +16,18 @@ public class MasterService extends Thread {
 
 
     private void startAllServices() {
+        startRideManagementService();
         startChargeManagementService();
     }
 
     private void startChargeManagementService() {
         chargeManagementService = new ChargeManagementService(this);
         chargeManagementService.start();
+    }
+
+    private void startRideManagementService() {
+        rideManagementService = new RideManagementService(this);
+        rideManagementService.start();
     }
 
 

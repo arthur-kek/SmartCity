@@ -1,11 +1,16 @@
 package core.services;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import core.clients.NotifyNewRideClient;
 import core.entities.DSRide;
 import core.entities.DSTaxi;
+import core.exceptions.ChargeStationException;
+import core.exceptions.WrongTaxiStateException;
 import grpc.protocols.RideOuterClass;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import utils.Constants;
+import utils.PositionUtils;
 
 public class RideListenerService extends Thread {
 
@@ -34,10 +39,19 @@ public class RideListenerService extends Thread {
             public void messageArrived(String topic, MqttMessage message) {
                 try {
                     DSRide ride = new DSRide(RideOuterClass.Ride.parseFrom(message.getPayload()));
-                    taxi.makeRide(ride);
-                    //System.out.printf("%s NEW RIDE ARRIVED:\n%s%n", SERVICE_NAME, ride);
-                } catch (Throwable t) {
-                    System.out.printf("%s RIDE ERROR", SERVICE_NAME);
+                    int idTopic = PositionUtils.getTopicIdByTopic(topic);
+
+                    NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic);
+                    client.start();
+                    client.join();
+
+                    if (client.getNewRideResponse() != null && client.getNewRideResponse().getMessage().equals("OK")) {
+                        System.out.printf("TAXI ID %d HAS SENT RIDE ID %d TO SERVER%n", taxi.getId(), ride.getId());
+                    } else {
+                        System.out.printf("TAXI ID %d CAN'T SEND RIDE ID %d TO SERVER%n", taxi.getId(), ride.getId());
+                    }
+                } catch (InvalidProtocolBufferException | InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
 

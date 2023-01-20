@@ -49,4 +49,18 @@ public class PositionUtils {
         return ChargingStations.getByEnum(station);
     }
 
+    public static int getTopicIdByTopic(String topic) {
+        switch (topic) {
+            case Constants.TOPIC_ONE:
+                return 1;
+            case Constants.TOPIC_TWO:
+                return 2;
+            case Constants.TOPIC_THREE:
+                return 3;
+            case Constants.TOPIC_FOUR:
+                return 4;
+        }
+        return -1;
+    }
+
 }
