@@ -15,21 +15,11 @@ message ChargeResponse {
   int32 taxiInQueue = 2;
 }
 
-message ElectRiderRequest {
-  string electionMessage = 1;
-}
-
-message ElectRiderResponse {
-  int32 id = 1;
-  int32 batteryLevel = 2;
-  Position position = 3;
-  int32 districtId = 4;
-}
-
 message NotifyNewRideToServer {
   Ride ride = 1;
   int32 topic = 2;
   string ts = 3;
+  bool election = 4;
 }
 
 message NewRideResponse {
@@ -39,6 +29,5 @@ message NewRideResponse {
 
 service ServiceProtocol {
   rpc askForCharge(ChargeRequest) returns (ChargeResponse);
-  rpc electRider(ElectRiderRequest) returns (ElectRiderResponse);
   rpc notifyNewRide(NotifyNewRideToServer) returns (NewRideResponse);
 }

@@ -2,40 +2,41 @@ package core.clients;
 
 import core.entities.DSRide;
 import core.entities.DSTaxi;
+
+import core.services.masterServices.RideManagementService;
 import grpc.protocols.PositionOuterClass;
 import grpc.protocols.RideOuterClass;
-import grpc.protocols.ServiceProtocolGrpc;
-import grpc.protocols.ServiceProtocolOuterClass;
+import grpc.protocols.TaxiProtocolGrpc;
+import grpc.protocols.TaxiProtocolOuterClass;
+import grpc.protocols.TaxiProtocolOuterClass.NotifyRideElectionResponse;
+import grpc.protocols.TaxiProtocolOuterClass.NotifyRideElection;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import utils.Constants;
-import utils.LogUtils;
 
 import java.util.concurrent.TimeUnit;
 
-public class NotifyNewRideClient extends Thread {
+public class RideElectionNotifyClient extends Thread {
 
+    private RideManagementService rideManagementService;
     private DSTaxi taxi;
     private DSRide ride;
-    private int topicId;
-    private boolean election;
 
-    private ServiceProtocolOuterClass.NewRideResponse newRideResponse;
+    private NotifyRideElectionResponse response;
 
-    public ServiceProtocolOuterClass.NewRideResponse getNewRideResponse() {
-        return newRideResponse;
-    }
-
-    public NotifyNewRideClient(DSTaxi taxi, DSRide ride, int topicId, boolean election) {
+    public RideElectionNotifyClient(DSTaxi taxi, DSRide ride, RideManagementService rideManagementService) {
         this.taxi = taxi;
         this.ride = ride;
-        this.topicId = topicId;
-        this.election = election;
+        this.rideManagementService = rideManagementService;
     }
 
-    public ServiceProtocolOuterClass.NotifyNewRideToServer buildRequest() {
-        return ServiceProtocolOuterClass.NotifyNewRideToServer.newBuilder()
+    public NotifyRideElectionResponse getResponse() {
+        return response;
+    }
+
+    public NotifyRideElection buildRequest() {
+        return NotifyRideElection.newBuilder()
                 .setRide(RideOuterClass.Ride.newBuilder()
                         .setId(ride.getId())
                         .setStart(PositionOuterClass.Position.newBuilder()
@@ -46,23 +47,20 @@ public class NotifyNewRideClient extends Thread {
                                 .setX(ride.getDestination().getX())
                                 .setY(ride.getDestination().getY())
                                 .build()))
-                .setTopic(topicId)
-                .setTs(LogUtils.getCurrentTS())
-                .setElection(election)
                 .build();
-
     }
 
-    private void notifyNewRide() throws InterruptedException {
-        String rideManagerAddress = String.format("%s:%s", Constants.ADM_SERVER_HOSTNAME, Constants.RIDE_MANAGER_DEFAULT_PORT);
-        final ManagedChannel channel = ManagedChannelBuilder.forTarget(rideManagerAddress).usePlaintext().build();
-        ServiceProtocolGrpc.ServiceProtocolStub stub = ServiceProtocolGrpc.newStub(channel);
+    private void notifyTaxi() throws InterruptedException {
+        String targetTaxiAddress = String.format("%s:%s", Constants.ADM_SERVER_HOSTNAME, taxi.getPort());
+        final ManagedChannel channel = ManagedChannelBuilder.forTarget(targetTaxiAddress).usePlaintext().build();
+        TaxiProtocolGrpc.TaxiProtocolStub stub = TaxiProtocolGrpc.newStub(channel);
 
-        ServiceProtocolOuterClass.NotifyNewRideToServer request = buildRequest();
-        stub.notifyNewRide(request, new StreamObserver<ServiceProtocolOuterClass.NewRideResponse>() {
+        NotifyRideElection request = buildRequest();
+
+        stub.notifyNewRideToTaxi(request, new StreamObserver<TaxiProtocolOuterClass.NotifyRideElectionResponse>() {
             @Override
-            public void onNext(ServiceProtocolOuterClass.NewRideResponse value) {
-                newRideResponse = value;
+            public void onNext(TaxiProtocolOuterClass.NotifyRideElectionResponse value) {
+                response = value;
             }
 
             @Override
@@ -76,6 +74,7 @@ public class NotifyNewRideClient extends Thread {
                 channel.shutdownNow();
             }
         });
+
         channel.awaitTermination(30, TimeUnit.SECONDS);
     }
 
@@ -83,11 +82,13 @@ public class NotifyNewRideClient extends Thread {
     public void run() {
         try {
             // TODO: Print start presentation
-            notifyNewRide();
+            notifyTaxi();
         } catch (Throwable t) {
             // TODO: Print some error message
         } finally {
             // TODO: Presentation with otherTaxiId is completed
         }
     }
+
+
 }

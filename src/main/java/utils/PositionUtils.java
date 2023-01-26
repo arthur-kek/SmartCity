@@ -63,4 +63,9 @@ public class PositionUtils {
         return -1;
     }
 
+    public static int getTopicIdByPosition(DSPosition position) {
+        String topic = getTopicByPosition(position);
+        return getTopicIdByTopic(topic);
+    }
+
 }

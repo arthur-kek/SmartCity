@@ -1,7 +1,6 @@
 package core.clients;
 
 import core.entities.DSTaxi;
-import core.services.masterServices.ChargeManagementService;
 import grpc.protocols.PositionOuterClass;
 import grpc.protocols.ServiceProtocolGrpc;
 import grpc.protocols.ServiceProtocolOuterClass;

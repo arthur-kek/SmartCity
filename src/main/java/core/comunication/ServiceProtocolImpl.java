@@ -28,12 +28,6 @@ public class ServiceProtocolImpl extends ServiceProtocolGrpc.ServiceProtocolImpl
                 .setMessage(message)
                 .build();
     }
-/*
-    @Override
-    public void electRider(ServiceProtocolOuterClass.ElectRiderRequest request, StreamObserver<ServiceProtocolOuterClass.ElectRiderResponse> responseObserver) {
-        return ServiceProtocolOuterClass.ElectRiderResponse.newBuilder()
-                .se
-    }*/
 
     @Override
     public void askForCharge(ServiceProtocolOuterClass.ChargeRequest request, StreamObserver<ServiceProtocolOuterClass.ChargeResponse> responseObserver) {
@@ -47,9 +41,16 @@ public class ServiceProtocolImpl extends ServiceProtocolGrpc.ServiceProtocolImpl
 
     @Override
     public void notifyNewRide(ServiceProtocolOuterClass.NotifyNewRideToServer request, StreamObserver<ServiceProtocolOuterClass.NewRideResponse> responseObserver) {
-        DSRide newRide = new DSRide(request.getRide());
+        DSRide ride = new DSRide(request.getRide());
+        String response;
         if (service instanceof RideManagementService) {
-            String response = ((RideManagementService) service).addRideToQueue(newRide, request.getTopic());
+            if (request.getElection()) {
+                response = ((RideManagementService) service).removeRideFromQueue(request.getTopic(), ride);
+            } else {
+                ((RideManagementService) service).addRideToQueue(ride, request.getTopic());
+                response = "OK";
+
+            }
             responseObserver.onNext(buildNewRideResponse(response));
             responseObserver.onCompleted();
         }

@@ -44,4 +44,7 @@ public class MasterService extends Thread {
         }
     }
 
+    public DSTaxi getTaxi() {
+        return taxi;
+    }
 }

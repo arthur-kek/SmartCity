@@ -27,36 +27,39 @@ public class PingService extends Thread {
     private void startPinging() throws InterruptedException {
 
         while (!quitting) {
+            if (!taxi.getOtherTaxis().isEmpty()) {
 
-            List<PingClient> clients = new ArrayList<>();
-            for (DSTaxi t : taxi.getOtherTaxis()) {
-                PingClient client = new PingClient(taxi, t);
-                clients.add(client);
-                client.start();
+                List<PingClient> clients = new ArrayList<>();
+                for (DSTaxi t : taxi.getOtherTaxis()) {
+                    PingClient client = new PingClient(taxi, t);
+                    clients.add(client);
+                    client.start();
+                }
+
+                for (PingClient pc : clients) {
+                    pc.join();
+                }
+
+                Stream.of(clients)
+                        .forEach(pingClient -> {
+                            if (pingClient.getPingResponse() == null) {
+                                int id = pingClient.getOtherTaxi().getId();
+                                System.out.printf("FOUND DEAD TAXI, ID: %d%n", id);
+                                instance.deleteTaxi(Constants.ADM_SERVER_ADDRESS, id);
+                                taxi.removeDeadTaxi(id);
+                            }
+                        });
+
+                if (!taxi.isMaster()) {
+                    Optional<DSTaxi> opt = Stream.of(taxi.getOtherTaxis())
+                            .filter(DSTaxi::isMaster)
+                            .findFirst();
+
+                    if (opt.isEmpty()) {
+                        taxi.electMaster();
+                    }
+                }
             }
-
-            for (PingClient pc : clients) {
-                pc.join();
-            }
-
-            Stream.of(clients)
-                            .forEach(pingClient -> {
-                                if (pingClient.getPingResponse() == null) {
-                                    int id = pingClient.getOtherTaxi().getId();
-                                    System.out.printf("FOUND DEAD TAXI, ID: %d%n", id);
-                                    instance.deleteTaxi(Constants.ADM_SERVER_ADDRESS, id);
-                                    taxi.removeDeadTaxi(id);
-                                }
-                            });
-
-            Optional<DSTaxi> opt = Stream.of(taxi.getOtherTaxis())
-                    .filter(DSTaxi::isMaster)
-                    .findFirst();
-
-            if (opt.isEmpty()) {
-                taxi.electMaster();
-            }
-
 
             sleep(Constants.PING_SLEEP_TIME);
         }

@@ -41,12 +41,12 @@ public class RideListenerService extends Thread {
                     DSRide ride = new DSRide(RideOuterClass.Ride.parseFrom(message.getPayload()));
                     int idTopic = PositionUtils.getTopicIdByTopic(topic);
 
-                    NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic);
+                    NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic, false);
                     client.start();
                     client.join();
 
                     if (client.getNewRideResponse() != null && client.getNewRideResponse().getMessage().equals("OK")) {
-                        System.out.printf("TAXI ID %d HAS SENT RIDE ID %d TO SERVER%n", taxi.getId(), ride.getId());
+                        System.out.printf("TAXI ID %d HAS SENT RIDE ID %d (%d;%d) TO SERVER%n", taxi.getId(), ride.getId(), ride.getStart().getX(), ride.getStart().getY());
                     } else {
                         System.out.printf("TAXI ID %d CAN'T SEND RIDE ID %d TO SERVER%n", taxi.getId(), ride.getId());
                     }
@@ -62,6 +62,26 @@ public class RideListenerService extends Thread {
             public void deliveryComplete(IMqttDeliveryToken token) {
             }
         });
+    }
+
+    public String notifyWonRide(DSRide ride) {
+        try {
+            int idTopic = PositionUtils.getTopicIdByPosition(ride.getStart());
+            NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic, true);
+            client.start();
+            client.join();
+
+            if (client.getNewRideResponse() != null && client.getNewRideResponse().getMessage().equals("OK")) {
+                System.out.printf("TAXI ID %d HAS SENT WON RIDE MESSAGE TO SERVER AND RECEIVED OK%n", taxi.getId());
+                return "OK";
+            } else {
+                System.out.printf("TAXI ID %d CANT SEND WON RIDE MESSAGE TO SERVER%n", taxi.getId());
+                return "ERROR";
+            }
+        } catch (InterruptedException ie) {
+            System.out.printf("TAXI ID %d CANNOT NOTIFY SERVER ABOUT HAVEING WON A RIDE ID %d%n", taxi.getId(), ride.getId());
+        }
+        return "ERROR";
     }
 
     public void subscribe(String topic) throws MqttException {

@@ -33,10 +33,15 @@ public class HelloService extends Thread {
         }
 
         System.out.println("OTHER TAXIS HELLO RESPONSES:");
-        Stream.of(helloClients)
-                .forEach(helloClient ->
-                        printResponse(helloClient.getHelloResponse(),
-                                helloClient.getOtherTaxi().getId()));
+
+        for (HelloClient client: helloClients) {
+            printResponse(client.getHelloResponse(),
+                    client.getOtherTaxi().getId());
+
+            if (client.getHelloResponse().getIsMaster()) {
+                taxi.setOtherTaxiMaster(client.getOtherTaxi().getId());
+            }
+        }
     }
 
     @Override

@@ -32,6 +32,7 @@ public class RegistrationService extends Thread {
             taxi.updatePosition(position);
             taxi.updateBatteryLevel(Constants.FULL_BATTERY_LEVEL, true);
             taxi.updateCurrentTopic(PositionUtils.getTopicByPosition(position));
+            taxi.updateCurrentDistrict(PositionUtils.getDistrictByPosition(position));
 
             List<DSTaxi> otherTaxis = Stream.of(newTaxi.getOtherTaxis())
                     .map(DSTaxi::new)

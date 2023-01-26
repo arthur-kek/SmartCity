@@ -8,6 +8,7 @@ import core.wrappers.RidesQueue;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import utils.Constants;
+import utils.PositionUtils;
 
 import java.io.IOException;
 
@@ -17,6 +18,10 @@ public class RideManagementService extends Thread {
 
     private Server rideServer;
     private MasterService masterService;
+    private DSRide rideOnFirstTopic;
+    private DSRide rideOnSecondTopic;
+    private DSRide rideOnThirdTopic;
+    private DSRide rideOnFourthTopic;
 
     public RideManagementService(MasterService service) {
         this.masterService = service;
@@ -38,30 +43,112 @@ public class RideManagementService extends Thread {
         return RidesQueue.getInstance().getRidesMap();
     }
 
-    public void startRideManagement() throws InterruptedException {
-        while (!quitting) {
+    public void checkRideMap() throws InterruptedException {
+        if (rideOnFirstTopic == null && getRideMap().getFromQueue(1) != null) {
+            rideOnFirstTopic = getRideMap().getFromQueue(1);
+            NotifyRideElectionService service = new NotifyRideElectionService(this, masterService.getTaxi(), rideOnFirstTopic);
+            service.start();
+            System.out.println("RIDE NOTIFIED");
+        }
 
+        if (rideOnSecondTopic == null && getRideMap().getFromQueue(2) != null) {
+            rideOnSecondTopic = getRideMap().getFromQueue(2);
+            NotifyRideElectionService service = new NotifyRideElectionService(this, masterService.getTaxi(), rideOnSecondTopic);
+            service.start();
+            System.out.println("RIDE NOTIFIED");
+        }
 
+        if (rideOnThirdTopic == null && getRideMap().getFromQueue(3) != null) {
+            rideOnThirdTopic = getRideMap().getFromQueue(3);
+            NotifyRideElectionService service = new NotifyRideElectionService(this, masterService.getTaxi(), rideOnThirdTopic);
+            service.start();
+            System.out.println("RIDE NOTIFIED");
+        }
 
+        if (rideOnFourthTopic == null && getRideMap().getFromQueue(4) != null) {
+            rideOnFourthTopic = getRideMap().getFromQueue(4);
+            NotifyRideElectionService service = new NotifyRideElectionService(this, masterService.getTaxi(), rideOnFourthTopic);
+            service.start();
+            System.out.println("RIDE NOTIFIED");
+        }
+
+    }
+
+    public String removeRideFromQueue(int idQueue, DSRide ride) {
+        switch (idQueue) {
+            case 1:
+                if (getRideMap().getFromQueue(1) != null && getRideMap().getFromQueue(1).getId() == ride.getId()) {
+                    getRideMap().removeFromQueue(1);
+                    rideOnFirstTopic = null;
+                } else {
+                    System.out.println("ERROR NOTIFYING RIDE REMOVE");
+                    return "ERROR";
+                }
+                break;
+            case 2:
+                if (getRideMap().getFromQueue(2) != null && getRideMap().getFromQueue(2).getId() == ride.getId()) {
+                getRideMap().removeFromQueue(2);
+                rideOnSecondTopic = null;
+                } else {
+                    System.out.println("ERROR NOTIFYING RIDE REMOVE");
+                    return "ERROR";
+                }
+                break;
+            case 3:
+                if (getRideMap().getFromQueue(3) != null && getRideMap().getFromQueue(3).getId() == ride.getId()) {
+                getRideMap().removeFromQueue(3);
+                rideOnThirdTopic = null;
+                } else {
+                    System.out.println("ERROR NOTIFYING RIDE REMOVE");
+                    return "ERROR";
+                }
+                break;
+            case 4:
+                if (getRideMap().getFromQueue(4) != null && getRideMap().getFromQueue(4).getId() == ride.getId()) {
+                getRideMap().removeFromQueue(4);
+                rideOnFourthTopic = null;
+                } else {
+                    System.out.println("ERROR NOTIFYING RIDE REMOVE");
+                    return "ERROR";
+                }
+                break;
+
+        }
+        return "OK";
+    }
+
+    /*
+        Il rider is not elected this service will retry on next cycle
+    */
+    public void notifyNotElectedRide(DSRide ride) {
+        int topic = PositionUtils.getTopicIdByPosition(ride.getStart());
+        switch (topic) {
+            case 1:
+                rideOnFirstTopic = null;
+                break;
+            case 2:
+                rideOnSecondTopic = null;
+                return;
+            case 3:
+                rideOnThirdTopic = null;
+                break;
+            case 4:
+                rideOnFourthTopic = null;
+                break;
         }
     }
 
-
     /*
-        If taxi, after being notified, respond ok to charge notify, this method removes taxi from charge queue
+        Each time new ride is added this server cycles all four topics and check if there is any ride on the queue, if there is any ride service starts election
     */
-    public void removeRideFromQueue(int idQueue) {
-        getRideMap().removeFromQueue(idQueue);
-    }
-
-    /*
-        Receive grpc request to charge from taxi, if the queue is empty the method sens taxi immediately to charge,
-        otherwise it adds taxi to charge queue
-    */
-    public String addRideToQueue(DSRide ride, int topic) {
+    public void addRideToQueue(DSRide ride, int topic) {
         System.out.printf("%s RECEIVED NEW RIDE ID %d%n", SERVICE_NAME, ride.getId());
         getRideMap().addToQueue(topic, ride);
-        return "OK";
+        try {
+            checkRideMap();
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
+        }
     }
 
     public synchronized void quitService() {
@@ -70,7 +157,7 @@ public class RideManagementService extends Thread {
 
     private void startAll() throws IOException, InterruptedException {
         startCommunicationServer();
-        startRideManagement();
+        checkRideMap();
     }
 
     @Override

@@ -20,6 +20,10 @@ public class GenericList<T> {
         genericList.remove(obj);
     }
 
+    public synchronized void remove(T obj) {
+        genericList.remove(obj);
+    }
+
     public synchronized T get(int id) {
         return genericList.get(id);
     }

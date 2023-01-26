@@ -63,7 +63,7 @@ public class SETA {
 
             public void deliveryComplete(IMqttDeliveryToken token) {
                 if (token.isComplete()) {
-                    System.out.println("RIDE IS COMPLETED");
+                    System.out.println("RIDE PUBLISHED");
                 }
             }
         });
@@ -77,7 +77,7 @@ public class SETA {
             int id = generateNewId(ride);
             ride.setId(id);
             publishRide(ride);
-           /* DSRide ride2 = new DSRide();
+            /*DSRide ride2 = new DSRide();
             publishRide(ride2);*/
 
         } catch (InvalidRide e) {
@@ -117,16 +117,16 @@ public class SETA {
 
         switch (topic) {
             case Constants.TOPIC_ONE:
-                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 1000 + districtOneCounter, topic);
+                System.out.printf("NEW RIDE ID %d CREATED ON %s START POSITION: (%d;%d)%n", 1000 + districtOneCounter - 1, topic, ride.getStart().getX(), ride.getStart().getY());
                 break;
             case Constants.TOPIC_TWO:
-                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 2000 + districtTwoCounter, topic);
+                System.out.printf("NEW RIDE ID %d CREATED ON %s START POSITION: (%d;%d)%n", 2000 + districtTwoCounter - 1, topic, ride.getStart().getX(), ride.getStart().getY());
                 break;
             case Constants.TOPIC_THREE:
-                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 3000 + districtThreeCounter, topic);
+                System.out.printf("NEW RIDE ID %d CREATED ON %s START POSITION: (%d;%d)%n", 3000 + districtThreeCounter - 1, topic, ride.getStart().getX(), ride.getStart().getY());
                 break;
             case Constants.TOPIC_FOUR:
-                System.out.printf("NEW RIDE ID %d CREATED ON %s%n", 4000 + districtFourCounter, topic);
+                System.out.printf("NEW RIDE ID %d CREATED ON %s START POSITION: (%d;%d)%n", 4000 + districtFourCounter - 1, topic, ride.getStart().getX(), ride.getStart().getY());
                 break;
         }
 
@@ -140,7 +140,7 @@ public class SETA {
         return RideOuterClass.Ride.newBuilder()
                 .setId(ride.getId())
                 .setStart(PositionOuterClass.Position.newBuilder()
-                        .setY(ride.getStart().getX())
+                        .setX(ride.getStart().getX())
                         .setY(ride.getStart().getY())
                         .build())
                 .setDestination(PositionOuterClass.Position.newBuilder()

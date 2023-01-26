@@ -1,5 +1,8 @@
 package core.extensions;
 
+import com.annimon.stream.Stream;
+import core.entities.DSRide;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +41,12 @@ public class MapQueue<T> {
     public synchronized void removeFromQueue(int id) {
         GenericList<T> temp = map.get(id);
         temp.remove(0);
+        map.put(id, temp);
+    }
+
+    public synchronized void removeFromQueue(int id, T obj) {
+        GenericList<T> temp = map.get(id);
+        temp.remove(obj);
         map.put(id, temp);
     }
 }
