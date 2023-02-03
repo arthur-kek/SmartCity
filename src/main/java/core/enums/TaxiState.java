@@ -5,5 +5,6 @@ public enum TaxiState {
     CHARGING,
     ON_ROAD,
     QUITTING,
-    LOW_BATTERY
+    LOW_BATTERY,
+    IN_ELECTION
 }

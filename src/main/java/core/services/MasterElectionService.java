@@ -37,7 +37,6 @@ public class MasterElectionService extends Thread {
         }
     }
 
-
     @Override
     public void run() {
         try {

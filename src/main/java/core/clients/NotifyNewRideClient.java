@@ -19,7 +19,6 @@ public class NotifyNewRideClient extends Thread {
     private DSTaxi taxi;
     private DSRide ride;
     private int topicId;
-    private boolean election;
 
     private ServiceProtocolOuterClass.NewRideResponse newRideResponse;
 
@@ -27,11 +26,10 @@ public class NotifyNewRideClient extends Thread {
         return newRideResponse;
     }
 
-    public NotifyNewRideClient(DSTaxi taxi, DSRide ride, int topicId, boolean election) {
+    public NotifyNewRideClient(DSTaxi taxi, DSRide ride, int topicId) {
         this.taxi = taxi;
         this.ride = ride;
         this.topicId = topicId;
-        this.election = election;
     }
 
     public ServiceProtocolOuterClass.NotifyNewRideToServer buildRequest() {
@@ -45,10 +43,9 @@ public class NotifyNewRideClient extends Thread {
                         .setDestination(PositionOuterClass.Position.newBuilder()
                                 .setX(ride.getDestination().getX())
                                 .setY(ride.getDestination().getY())
-                                .build()))
+                                .build())
+                        .setDistrictId(ride.getRideDistrictId()))
                 .setTopic(topicId)
-                .setTs(LogUtils.getCurrentTS())
-                .setElection(election)
                 .build();
 
     }

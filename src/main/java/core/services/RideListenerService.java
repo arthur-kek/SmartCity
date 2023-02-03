@@ -6,6 +6,7 @@ import core.entities.DSRide;
 import core.entities.DSTaxi;
 import core.exceptions.ChargeStationException;
 import core.exceptions.WrongTaxiStateException;
+import core.wrappers.RidesQueue;
 import grpc.protocols.RideOuterClass;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -41,18 +42,19 @@ public class RideListenerService extends Thread {
                     DSRide ride = new DSRide(RideOuterClass.Ride.parseFrom(message.getPayload()));
                     int idTopic = PositionUtils.getTopicIdByTopic(topic);
 
-                    NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic, false);
+                    NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic);
                     client.start();
                     client.join();
 
-                    if (client.getNewRideResponse() != null && client.getNewRideResponse().getMessage().equals("OK")) {
-                        System.out.printf("TAXI ID %d HAS SENT RIDE ID %d (%d;%d) TO SERVER%n", taxi.getId(), ride.getId(), ride.getStart().getX(), ride.getStart().getY());
-                    } else {
-                        System.out.printf("TAXI ID %d CAN'T SEND RIDE ID %d TO SERVER%n", taxi.getId(), ride.getId());
+                    if (client.getNewRideResponse() != null) {
+                        if (!client.getNewRideResponse().getMessage().equals("INSERTED")) {
+                            System.out.printf("TAXI ID %d CAN'T SEND RIDE ID %d TO SERVER. ERROR %s%n", taxi.getId(), ride.getId(), client.getNewRideResponse().getMessage());
+                        }
                     }
                 } catch (InvalidProtocolBufferException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
+
             }
 
             public void connectionLost(Throwable cause) {
@@ -64,33 +66,13 @@ public class RideListenerService extends Thread {
         });
     }
 
-    public String notifyWonRide(DSRide ride) {
-        try {
-            int idTopic = PositionUtils.getTopicIdByPosition(ride.getStart());
-            NotifyNewRideClient client = new NotifyNewRideClient(taxi, ride, idTopic, true);
-            client.start();
-            client.join();
-
-            if (client.getNewRideResponse() != null && client.getNewRideResponse().getMessage().equals("OK")) {
-                System.out.printf("TAXI ID %d HAS SENT WON RIDE MESSAGE TO SERVER AND RECEIVED OK%n", taxi.getId());
-                return "OK";
-            } else {
-                System.out.printf("TAXI ID %d CANT SEND WON RIDE MESSAGE TO SERVER%n", taxi.getId());
-                return "ERROR";
-            }
-        } catch (InterruptedException ie) {
-            System.out.printf("TAXI ID %d CANNOT NOTIFY SERVER ABOUT HAVEING WON A RIDE ID %d%n", taxi.getId(), ride.getId());
-        }
-        return "ERROR";
-    }
-
     public void subscribe(String topic) throws MqttException {
         mqttClient.subscribe(topic, Constants.DEFAULT_QOS);
         System.out.printf("%s MQTT CLIENT SUBSCRIBED ON TOPIC %s%n", SERVICE_NAME, topic);
     }
 
     public void unsubscribe(String topic) throws MqttException {
-             mqttClient.unsubscribe(topic);
+        mqttClient.unsubscribe(topic);
     }
 
     public void initConnection() throws MqttException {

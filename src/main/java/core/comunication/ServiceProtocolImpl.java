@@ -42,16 +42,9 @@ public class ServiceProtocolImpl extends ServiceProtocolGrpc.ServiceProtocolImpl
     @Override
     public void notifyNewRide(ServiceProtocolOuterClass.NotifyNewRideToServer request, StreamObserver<ServiceProtocolOuterClass.NewRideResponse> responseObserver) {
         DSRide ride = new DSRide(request.getRide());
-        String response;
         if (service instanceof RideManagementService) {
-            if (request.getElection()) {
-                response = ((RideManagementService) service).removeRideFromQueue(request.getTopic(), ride);
-            } else {
-                ((RideManagementService) service).addRideToQueue(ride, request.getTopic());
-                response = "OK";
-
-            }
-            responseObserver.onNext(buildNewRideResponse(response));
+            String tmp = ((RideManagementService) service).addRideToQueue(ride, request.getTopic());
+            responseObserver.onNext(buildNewRideResponse(tmp));
             responseObserver.onCompleted();
         }
     }

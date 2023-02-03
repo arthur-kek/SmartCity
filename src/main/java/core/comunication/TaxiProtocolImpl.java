@@ -15,6 +15,7 @@ import grpc.protocols.TaxiProtocolOuterClass.MasterResponse;
 import grpc.protocols.TaxiProtocolOuterClass.PropagateElectionResponse;
 import grpc.protocols.TaxiProtocolOuterClass.NotifyRideElectionResponse;
 import io.grpc.stub.StreamObserver;
+import utils.LogUtils;
 
 public class TaxiProtocolImpl extends TaxiProtocolImplBase {
 
@@ -82,26 +83,34 @@ public class TaxiProtocolImpl extends TaxiProtocolImplBase {
 
     @Override
     public void propagateElection(TaxiProtocolOuterClass.PropagateElectionRequest request, StreamObserver<TaxiProtocolOuterClass.PropagateElectionResponse> responseObserver) {
-        if (taxi.getState() != TaxiState.FREE) {
-            responseObserver.onNext(buildElectionResponse("BUSY"));
-            responseObserver.onCompleted();
-        } else {
+        if (taxi.getId() == request.getCurrentCandidateId()) {
             DSRide ride = new DSRide(request.getRide());
-            taxi.checkRideElection(ride, request.getCurrentCandidateId(), request.getCurrentCandidateBatteryLevel(), request.getDistance());
+            System.out.printf("RIDE ID %d WAS WON BY TAXI ID %d ON %s%n", ride.getId(), taxi.getId(), LogUtils.getCurrentTS());
             responseObserver.onNext(buildElectionResponse("OK"));
             responseObserver.onCompleted();
+            taxi.releaseParticipantsAndRide(ride, request.getParticipants());
+        } else {
+            if (taxi.getState() != TaxiState.FREE) {
+                responseObserver.onNext(buildElectionResponse("BUSY"));
+                responseObserver.onCompleted();
+            } else {
+                DSRide ride = new DSRide(request.getRide());
+                responseObserver.onNext(buildElectionResponse("OK"));
+                responseObserver.onCompleted();
+                taxi.checkRideElection(ride, request.getCurrentCandidateId(), request.getCurrentCandidateBatteryLevel(), request.getDistance(), request.getParticipants());
+            }
         }
     }
 
     @Override
     public void notifyNewRideToTaxi(TaxiProtocolOuterClass.NotifyRideElection request, StreamObserver<TaxiProtocolOuterClass.NotifyRideElectionResponse> responseObserver) {
-        if (taxi.getState() != TaxiState.FREE) {
-            responseObserver.onNext(buildNotifyElectionResponse("BUSY"));
-            responseObserver.onCompleted();
-        } else {
-            DSRide ride = new DSRide(request.getRide());
-            taxi.initRideElection(ride);
+        DSRide ride = new DSRide(request.getRide());
+        if (taxi.getState() == TaxiState.FREE && taxi.getCurrentDistrict().getValue() == ride.getRideDistrictId()) {
             responseObserver.onNext(buildNotifyElectionResponse("OK"));
+            responseObserver.onCompleted();
+            taxi.initRideElection(ride);
+        } else {
+            responseObserver.onNext(buildNotifyElectionResponse("BUSY"));
             responseObserver.onCompleted();
         }
     }
@@ -119,5 +128,18 @@ public class TaxiProtocolImpl extends TaxiProtocolImplBase {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    private TaxiProtocolOuterClass.releaseTaxiResponse buildReleaseTaxiMessage(String message) {
+        return TaxiProtocolOuterClass.releaseTaxiResponse.newBuilder()
+                .setResponse(message)
+                .build();
+    }
+
+    @Override
+    public void releaseTaxi(TaxiProtocolOuterClass.releaseTaxiRequest request, StreamObserver<TaxiProtocolOuterClass.releaseTaxiResponse> responseObserver) {
+        taxi.updateTaxiState(TaxiState.FREE);
+        responseObserver.onNext(buildReleaseTaxiMessage("OK"));
+        responseObserver.onCompleted();
     }
 }

@@ -19,6 +19,7 @@ public class RiderElectionClient extends Thread {
     private int currentBestId;
     private int currentBestBatteryLevel;
     private double distance;
+    private String participants;
 
     private TaxiProtocolOuterClass.PropagateElectionResponse response;
 
@@ -26,12 +27,13 @@ public class RiderElectionClient extends Thread {
         return response;
     }
 
-    public RiderElectionClient(DSTaxi targetTaxi, DSRide ride, int currentBestId, int currentBestBatteryLevel, double distance) {
+    public RiderElectionClient(DSTaxi targetTaxi, DSRide ride, int currentBestId, int currentBestBatteryLevel, double distance, String participants) {
         this.targetTaxi = targetTaxi;
         this.ride = ride;
         this.currentBestId = currentBestId;
         this.currentBestBatteryLevel = currentBestBatteryLevel;
         this.distance = distance;
+        this.participants = participants;
     }
 
     public TaxiProtocolOuterClass.PropagateElectionRequest buildRequest() {
@@ -45,10 +47,12 @@ public class RiderElectionClient extends Thread {
                         .setDestination(PositionOuterClass.Position.newBuilder()
                                 .setX(ride.getDestination().getX())
                                 .setY(ride.getDestination().getY())
-                                .build()))
+                                .build())
+                        .setDistrictId(ride.getRideDistrictId()))
                 .setCurrentCandidateId(currentBestId)
                 .setCurrentCandidateBatteryLevel(currentBestBatteryLevel)
                 .setDistance(distance)
+                .setParticipants(participants)
                 .build();
     }
 

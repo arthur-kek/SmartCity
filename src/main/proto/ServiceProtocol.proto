@@ -18,13 +18,10 @@ message ChargeResponse {
 message NotifyNewRideToServer {
   Ride ride = 1;
   int32 topic = 2;
-  string ts = 3;
-  bool election = 4;
 }
 
 message NewRideResponse {
   string message = 1;
-  string offset = 2;
 }
 
 service ServiceProtocol {

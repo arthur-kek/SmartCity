@@ -46,7 +46,8 @@ public class RideElectionNotifyClient extends Thread {
                         .setDestination(PositionOuterClass.Position.newBuilder()
                                 .setX(ride.getDestination().getX())
                                 .setY(ride.getDestination().getY())
-                                .build()))
+                                .build())
+                        .setDistrictId(ride.getRideDistrictId()))
                 .build();
     }
 

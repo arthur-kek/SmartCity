@@ -2,27 +2,24 @@ package core.entities;
 
 import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
-import core.clients.RiderElectionClient;
 import core.enums.District;
 import core.enums.TaxiState;
 import core.exceptions.ChargeStationException;
+import core.exceptions.MakeRideException;
 import core.exceptions.WrongTaxiStateException;
 import core.services.*;
 import core.services.masterServices.MasterService;
 import core.wrappers.RESTWrapper;
 import grpc.protocols.ServiceProtocolOuterClass;
 import grpc.protocols.TaxiProtocolOuterClass;
-import javafx.geometry.Pos;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import rest.beans.Taxi;
 import utils.Constants;
 import utils.LogUtils;
 import utils.PositionUtils;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Random;
+
+import java.util.*;
 
 
 public class DSTaxi {
@@ -37,9 +34,7 @@ public class DSTaxi {
     private String currentTopic;
     private boolean isMaster;
     private DSChargingStation currentStation;
-
     private District currentDistrict;
-
     private List<Double> averagePollution = new ArrayList<>();
     private TaxiState state = TaxiState.FREE;
     private List<DSTaxi> otherTaxis = new ArrayList<>();
@@ -69,8 +64,8 @@ public class DSTaxi {
     private ChargeRequestService chargeRequestService;
     private MasterService masterService;
     private MasterElectionService masterElectionService;
-
     private PrintDataService printDataService;
+    private TaxiReleaseService taxiReleaseService;
 
     public DSTaxi(int id, int port, String serverAddress, DSPosition position, TaxiState state, List<DSTaxi> otherTaxis) {
         this.id = id;
@@ -132,8 +127,21 @@ public class DSTaxi {
         this.currentDistrict = PositionUtils.getDistrictByPosition(position);
     }
 
+    /*
+        Once a free taxi from right district if found that taxi starts election with itself as best candidate
+            - if it's the only one taxi in the network ride is automatically won by this taxi
+            - if there are other taxis in the network this taxi propagate the election to next taxi
+    */
     public void initRideElection(DSRide ride) {
-        checkRideElection(ride, 101, 101, 101);
+        updateTaxiState(TaxiState.IN_ELECTION);
+        if (getOtherTaxis().isEmpty()) {
+            System.out.printf("RIDE ID %d WAS WON BY TAXI ID %d%n", ride.getId(), this.id);
+            releaseParticipantsAndRide(ride, "");
+        } else {
+            System.out.printf("MASTER IS FREE. START ELECTION FOR RIDE ID %d FROM HERE ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+            double mDistance = calculateDistance(ride.getStart());
+            propagateElection(ride, this.id, this.batteryLevel, mDistance, getTaxiAfterId(this.id), String.valueOf(this.id));
+        }
     }
 
     /*
@@ -141,82 +149,87 @@ public class DSTaxi {
         This taxi checks if it is better candidate to make a ride:
          - if it's not it's propagate election with current best candidate
          - if it's better candidate than previous it's propagate election with itself as better candidate
-         - if current best is this taxi it finish election, notify ride manager and make a ride
     */
-    public void checkRideElection(DSRide ride, int currentBestId, int currentBestBatteryLevel, double bestDistance) {
-        District rideDistrict = PositionUtils.getDistrictByPosition(ride.getStart());
-        if (rideDistrict == getCurrentDistrict()) {
-            if (getOtherTaxis().isEmpty()) {
-                notifyRideWon(ride);
-                return;
-            }
-            if (currentBestId == this.id) {
-                notifyRideWon(ride);
+    public void checkRideElection(DSRide ride, int currentBestId, int currentBestBatteryLevel, double bestDistance, String participants) {
+        updateTaxiState(TaxiState.IN_ELECTION);
+        if (ride.getRideDistrictId() == getCurrentDistrict().getValue()) {
+            double mDistance = calculateDistance(ride.getStart());
+            boolean isThisTaxiBetter = isThisTaxiBetter(currentBestId, currentBestBatteryLevel, bestDistance, mDistance);
+            if (isThisTaxiBetter) {
+                System.out.printf("TAXI ID %d WON FIGHT AGAINST TAXI ID %d FOR RIDE ID %d ON %s%n", this.id, currentBestId, ride.getId(), LogUtils.getCurrentTS());
+                propagateElection(ride, this.id, this.batteryLevel, mDistance, getTaxiAfterId(this.id), participants.concat(">" + this.id));
             } else {
-                double mDistance = calculateDistance(ride.getStart());
-                if (mDistance < bestDistance) {
-                    propagateElection(ride, this.id, this.getBatteryLevel(), mDistance, getTaxiAfterId(this.id));
-                } else if (mDistance == bestDistance) {
-                    if (getBatteryLevel() > currentBestBatteryLevel) {
-                        propagateElection(ride, this.id, this.getBatteryLevel(), mDistance, getTaxiAfterId(this.id));
-                    } else if (getBatteryLevel() == currentBestBatteryLevel) {
-                        if (this.id > currentBestId) {
-                            propagateElection(ride, this.id, this.getBatteryLevel(), mDistance, getTaxiAfterId(this.id));
-                        } else {
-                            propagateElection(ride, currentBestId, currentBestBatteryLevel, bestDistance, getTaxiAfterId(this.id));
-                        }
-                    } else {
-                        propagateElection(ride, currentBestId, currentBestBatteryLevel, bestDistance, getTaxiAfterId(this.id));
-                    }
-                } else {
-                    propagateElection(ride, currentBestId, currentBestBatteryLevel, bestDistance, getTaxiAfterId(this.id));
-                }
+                System.out.printf("TAXI ID %d LOSE FIGHT AGAINST TAXI ID %d FOR RIDE ID %d ON %s%n", this.id, currentBestId, ride.getId(), LogUtils.getCurrentTS());
+                updateTaxiState(TaxiState.FREE);
+                propagateElection(ride, currentBestId, currentBestBatteryLevel, bestDistance, getTaxiAfterId(this.id), participants);
             }
         }
+        System.out.printf("SKIP TAXI ID %d ELECTION FOR RIDE ID %d ON %s%n", this.id, ride.getId(), LogUtils.getCurrentTS());
+        updateTaxiState(TaxiState.FREE);
+        propagateElection(ride, currentBestId, currentBestBatteryLevel, bestDistance, getTaxiAfterId(this.id), participants);
+    }
 
+    private boolean isThisTaxiBetter(int currentBestId, int currentBestBatteryLevel, double bestDistance, double mDistance) {
+        if (mDistance < bestDistance) {
+            return true;
+        } else if (mDistance == bestDistance) {
+            if (getBatteryLevel() > currentBestBatteryLevel) {
+                return true;
+            } else if (getBatteryLevel() == currentBestBatteryLevel) {
+                return this.id > currentBestId;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     /*
         Taxi notifies RideManagementService about having won the ride, service can delete the ride from queue so taxi can make this ride
     */
-    private void notifyRideWon(DSRide ride) {
+    public void releaseParticipantsAndRide(DSRide ride, String participants) {
         try {
-            String message = rideListenerService.notifyWonRide(ride);
-            if (message.equals("OK")) {
-                makeRide(ride);
+            if (!participants.isEmpty()) {
+                startTaxiReleaseServiceService(participants);
             }
+            makeRide(ride);
         } catch (InterruptedException ie) {
             ie.printStackTrace();
+        } catch (MakeRideException mre) {
+            System.out.printf("MAKE_RIDE_EXEPTION FOR RIDE ID %d FOR ID %d ON %s%n", ride.getId(), this.id, LogUtils.getCurrentTS());
         }
     }
 
     /*
-        If target taxi doesn't respond to propagation message, or it is BUSY, sender taxi will try to propagate message to next taxi, coming after dead/busy one
+        Streams the list of taxi ordered by id, this taxi is also present inside the list
+        Given an id returns the taxi right after taxi with given id
     */
-    public void retryPropagation(DSRide ride, int currentBestId, int currentBestBatteryLevel, double bestDistance, int deadTaxiId) {
-        propagateElection(ride, currentBestId, currentBestBatteryLevel, bestDistance, getTaxiAfterId(deadTaxiId));
-    }
-
     public DSTaxi getTaxiAfterId(int id) {
         if (getOtherTaxis().isEmpty()) {
             return this;
         }
-        Optional<DSTaxi> nextTaxi = Stream.of(getOtherTaxis())
-                .sorted(Comparator.comparingInt(t -> t.id))
+        List<DSTaxi> allTaxis = new ArrayList<>(getOtherTaxis());
+        allTaxis.add(this);
+
+        allTaxis.sort((a, b) -> a.id < b.id ? -1 : 1);
+
+        Optional<DSTaxi> nextTaxi = Stream.of(allTaxis)
                 .filter(taxi -> taxi.id > id)
                 .findFirst();
+
         if (nextTaxi.isPresent()) {
             return nextTaxi.get();
         } else {
-            return getOtherTaxis().get(0);
+            return allTaxis.get(0);
         }
     }
 
-    private void propagateElection(DSRide ride, int currentBestId, int currentBestBatteryLevel, double bestDistance, DSTaxi nextTaxi) {
-        RiderElectionService riderElectionService = new RiderElectionService(this, nextTaxi, ride, currentBestId, currentBestBatteryLevel, bestDistance);
+    private void propagateElection(DSRide ride, int currentBestId, int currentBestBatteryLevel, double bestDistance, DSTaxi nextTaxi, String participants) {
+        PropagateRiderElectionService propagateRiderElectionService = new PropagateRiderElectionService(this, nextTaxi, ride, currentBestId, currentBestBatteryLevel, bestDistance, participants);
         try {
-            riderElectionService.start();
-            riderElectionService.join();
+            propagateRiderElectionService.start();
+            propagateRiderElectionService.join();
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         }
@@ -225,41 +238,42 @@ public class DSTaxi {
     /*
         If this taxi win the election it makes a ride
     */
-    public void makeRide(DSRide ride) throws InterruptedException {
-        if (getState() == TaxiState.FREE) {
-            try {
-                updateTaxiState(TaxiState.ON_ROAD);
-                System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
-                Thread.sleep(Constants.RIDE_EXECUTION_TIME);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            } finally {
-                System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
+    public void makeRide(DSRide ride) throws InterruptedException, MakeRideException {
+        if (getState() == TaxiState.ON_ROAD) {
+            throw new MakeRideException();
+        }
+        updateTaxiState(TaxiState.ON_ROAD);
+        try {
+            System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+            Thread.sleep(Constants.RIDE_EXECUTION_TIME);
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
+        } finally {
+            System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
 
-                int distance = (int) (PositionUtils.CalculateDistance(getPosition(), ride.getStart())
-                        + PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination()));
+            int distance = (int) (PositionUtils.CalculateDistance(getPosition(), ride.getStart())
+                    + PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination()));
 
-                updateStatistics(distance, true);
-                updatePosition(ride.getDestination());
-                updateCurrentStation(PositionUtils.getChargingStationByPosition(getPosition()));
+            updateStatistics(distance, true);
+            updatePosition(ride.getDestination());
+            updateCurrentStation(PositionUtils.getChargingStationByPosition(getPosition()));
 
-                String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
-                decreaseBatteryLevel(distance);
+            String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
+            decreaseBatteryLevel(distance);
 
-                if (!getCurrentTopic().equals(newTopic)) {
-                    String previousTopic = currentTopic;
-                    updateCurrentTopic(newTopic);
-                    System.out.println("CHANGE TOPIC\n");
-                    try {
-                        updateCurrentDistrict(PositionUtils.getDistrictByPosition(getPosition()));
-                        rideListenerService.unsubscribe(previousTopic);
-                        rideListenerService.subscribe(newTopic);
-                    } catch (MqttException e) {
-                        System.out.printf("ERROR SUBSCRIBING TOPIC %s%n", newTopic);
-                    }
+            if (!getCurrentTopic().equals(newTopic)) {
+                String previousTopic = currentTopic;
+                updateCurrentTopic(newTopic);
+                System.out.println("CHANGE TOPIC\n");
+                try {
+                    updateCurrentDistrict(PositionUtils.getDistrictByPosition(getPosition()));
+                    rideListenerService.unsubscribe(previousTopic);
+                    rideListenerService.subscribe(newTopic);
+                } catch (MqttException e) {
+                    System.out.printf("ERROR SUBSCRIBING TOPIC %s%n", newTopic);
                 }
-                updateTaxiState(TaxiState.FREE);
             }
+            updateTaxiState(TaxiState.FREE);
         }
     }
 
@@ -354,9 +368,11 @@ public class DSTaxi {
         }
     }
 
-    private void updateTaxiState(TaxiState state) {
+    public void updateTaxiState(TaxiState state) {
         synchronized (lockState) {
-            this.state = state;
+            if (state != TaxiState.QUITTING) {
+                this.state = state;
+            }
         }
     }
 
@@ -515,6 +531,12 @@ public class DSTaxi {
         masterService = new MasterService(this);
         masterService.start();
         masterService.join();
+    }
+
+    private void startTaxiReleaseServiceService(String participants) throws InterruptedException {
+        taxiReleaseService = new TaxiReleaseService(this, participants);
+        taxiReleaseService.start();
+        taxiReleaseService.join();
     }
 
     public void electMaster() throws InterruptedException {
@@ -696,7 +718,7 @@ public class DSTaxi {
         synchronized (lockMaster) {
             isMaster = true;
         }
-        if (masterService != null) {
+        if (masterService == null) {
             try {
                 startMasterService();
             } catch (InterruptedException ie) {

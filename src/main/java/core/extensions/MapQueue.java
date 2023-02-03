@@ -1,8 +1,5 @@
 package core.extensions;
 
-import com.annimon.stream.Stream;
-import core.entities.DSRide;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,39 +11,53 @@ public class MapQueue<T> {
         map = new HashMap<>();
     }
 
-    public synchronized void addToQueue(int id, T e) {
+    public synchronized void addToQueue(int key, T e) {
         GenericList<T> temp;
-        if (map.get(id) == null) {
+        if (map.get(key) == null) {
             temp = new GenericList<>();
         } else {
-            temp = map.get(id);
+            temp = map.get(key);
         }
         temp.insert(e);
-        map.put(id, temp);
-        notifyAll();
+        map.put(key, temp);
     }
 
-    public synchronized T getFromQueue(int id) {
-        if (map.get(id) == null || map.get(id).isEmpty()) {
-            notifyAll();
+    public synchronized T getFromQueue(int key) {
+        if (map.get(key) == null || map.get(key).isEmpty()) {
             return null;
         }
 
-        GenericList<T> temp = map.get(id);
+        GenericList<T> temp = map.get(key);
         T obj = temp.get(0);
-        map.put(id, temp);
+        map.put(key, temp);
         return obj;
     }
 
-    public synchronized void removeFromQueue(int id) {
-        GenericList<T> temp = map.get(id);
-        temp.remove(0);
-        map.put(id, temp);
+    public synchronized T getAndRemoveFromQueue(int key) {
+        if (map.get(key) == null || map.get(key).isEmpty()) {
+            return null;
+        }
+
+        GenericList<T> temp = map.get(key);
+        T obj = temp.getAndRemove(0);
+        map.put(key, temp);
+        return obj;
     }
 
-    public synchronized void removeFromQueue(int id, T obj) {
-        GenericList<T> temp = map.get(id);
-        temp.remove(obj);
-        map.put(id, temp);
+    public synchronized void removeFromQueue(int key) {
+        GenericList<T> temp = map.get(key);
+        temp.remove(0);
+        map.put(key, temp);
     }
+
+    public synchronized void insertAsFirst(int key, T e) {
+        GenericList<T> temp = map.get(key);
+        temp.insertAsFirst(e);
+        map.put(key, temp);
+    }
+
+    public synchronized GenericList<T> getEntireQueue(int key) {
+        return map.get(key);
+    }
+
 }

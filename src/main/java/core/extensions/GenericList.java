@@ -16,12 +16,24 @@ public class GenericList<T> {
     }
 
     public synchronized void remove(int id) {
-        T obj = genericList.get(id);
-        genericList.remove(obj);
+        genericList.remove(id);
     }
 
     public synchronized void remove(T obj) {
         genericList.remove(obj);
+    }
+
+    public synchronized T getAndRemove(int id) {
+        T temp = get(id);
+        if (temp != null) {
+            genericList.remove(temp);
+            return temp;
+        }
+        return null;
+    }
+
+    public synchronized void insertAsFirst(T obj) {
+        genericList.add(0, obj);
     }
 
     public synchronized T get(int id) {
@@ -30,5 +42,9 @@ public class GenericList<T> {
 
     public synchronized boolean isEmpty() {
         return genericList.isEmpty();
+    }
+
+    public synchronized List<T> getList() {
+        return genericList;
     }
 }

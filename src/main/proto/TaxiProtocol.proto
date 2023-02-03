@@ -48,6 +48,7 @@ message PropagateElectionRequest {
   int32 currentCandidateId = 2;
   int32 currentCandidateBatteryLevel = 3;
   double distance = 4;
+  string participants = 5;
 }
 
 message PropagateElectionResponse {
@@ -62,6 +63,15 @@ message NotifyRideElectionResponse {
   string response = 1;
 }
 
+message ReleaseTaxiRequest {
+  string releaseMessage = 1;
+}
+
+message releaseTaxiResponse {
+  string Response = 1;
+}
+
+
 service TaxiProtocol {
   rpc sayHello(HelloRequest) returns (HelloResponse);
   rpc ping(PingRequest) returns (PingResponse);
@@ -69,6 +79,7 @@ service TaxiProtocol {
   rpc setMaster(SetMasterRequest) returns (MasterResponse);
   rpc propagateElection(PropagateElectionRequest) returns (PropagateElectionResponse);
   rpc notifyNewRideToTaxi(NotifyRideElection) returns (NotifyRideElectionResponse);
+  rpc releaseTaxi(ReleaseTaxiRequest) returns (ReleaseTaxiResponse);
 }
 
 

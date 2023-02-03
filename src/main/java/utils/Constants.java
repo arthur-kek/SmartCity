@@ -23,7 +23,9 @@ public class Constants {
 
     public static final int SEND_STATISTIC_FREQUENCY_TIME = 15000;
 
-    public static final int RIDE_GENERATION_FREQUENCY_TIME = 5000;
+    public static final int RIDE_GENERATION_FREQUENCY_TIME = 2500;
+
+    public static final int WAIT_TIME_UNTIL_CHECK_RIDES_QUEUE = 2000;
 
     public static final int RIDE_EXECUTION_TIME = 5000;
 

@@ -6,4 +6,5 @@ message Ride {
   int32 id = 1;
   Position start = 2;
   Position destination = 3;
+  int32 districtId = 4;
 }

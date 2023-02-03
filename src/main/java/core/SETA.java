@@ -4,6 +4,7 @@ import core.entities.DSPosition;
 import core.entities.DSRide;
 import core.enums.District;
 import core.exceptions.InvalidRide;
+import core.wrappers.RidesQueue;
 import grpc.protocols.PositionOuterClass;
 import grpc.protocols.RideOuterClass;
 import org.eclipse.paho.client.mqttv3.*;
@@ -38,7 +39,9 @@ public class SETA {
 
     public void loopRides() throws InterruptedException, MqttException {
         while (true) {
-            createNewRides();
+            createNewRide();
+            waitABit();
+            createNewRide();
             waitABit();
         }
     }
@@ -69,20 +72,19 @@ public class SETA {
         });
     }
 
-    // Generates two rides each 5 seconds
-    public void createNewRides() throws MqttException {
+    public void createNewRide() throws MqttException {
         try {
-            // TODO generate two rides
-            DSRide ride = new DSRide();
-            int id = generateNewId(ride);
-            ride.setId(id);
-            publishRide(ride);
-            /*DSRide ride2 = new DSRide();
-            publishRide(ride2);*/
-
+            generateAndPublish();
         } catch (InvalidRide e) {
             System.out.printf("%s INVALID RIDE", SERVICE_NAME);
         }
+    }
+
+    private void generateAndPublish() throws MqttException, InvalidRide {
+        DSRide ride = new DSRide();
+        int id = generateNewId(ride);
+        ride.setId(id);
+        publishRide(ride);
     }
 
     private int generateNewId(DSRide ride) {
@@ -147,6 +149,7 @@ public class SETA {
                         .setX(ride.getDestination().getX())
                         .setY(ride.getDestination().getY())
                         .build())
+                .setDistrictId(ride.getRideDistrictId())
                 .build()
                 .toByteArray();
     }

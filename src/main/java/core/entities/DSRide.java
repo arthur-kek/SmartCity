@@ -1,8 +1,10 @@
 package core.entities;
 
+import core.enums.District;
 import core.exceptions.InvalidRide;
 import grpc.protocols.RideOuterClass;
 import utils.Constants;
+import utils.PositionUtils;
 
 import java.util.Random;
 import java.util.UUID;
@@ -11,6 +13,7 @@ public class DSRide {
     private int id;
     private DSPosition start;
     private DSPosition destination;
+    private int rideDistrictId;
 
     public DSRide() throws InvalidRide {
         Random random = new Random();
@@ -27,12 +30,14 @@ public class DSRide {
 
         this.start = startingPoint;
         this.destination = destinationPoint;
+        this.rideDistrictId = PositionUtils.getDistrictByPosition(startingPoint).getValue();
     }
 
     public DSRide(RideOuterClass.Ride ride) {
         this.id = ride.getId();
         this.start = new DSPosition(ride.getStart());
         this.destination = new DSPosition(ride.getDestination());
+        this.rideDistrictId = ride.getDistrictId();
     }
 
     public int getId() {
@@ -49,6 +54,10 @@ public class DSRide {
 
     public DSPosition getDestination() {
         return destination;
+    }
+
+    public int getRideDistrictId() {
+        return rideDistrictId;
     }
 
     @Override
