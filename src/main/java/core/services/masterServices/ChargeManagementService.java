@@ -111,9 +111,9 @@ public class ChargeManagementService extends Thread {
     */
     public String addTaxiToChargeQueue(DSTaxi taxi, String timestamp) {
         //System.out.printf("%s RECEIVED RECHARGE REQUEST FROM %d%n", SERVICE_NAME, taxi.getId());
-/*        if (getChargeQueue().getFromQueue(taxi.getCurrentStation().getStation().getId()) == null) {
+        if (getChargeQueue().getFromQueue(taxi.getCurrentStation().getStation().getId()) == null) {
             return "OK";
-        }*/
+        }
         String response = "";
         try {
             long offset = getOffset(timestamp);

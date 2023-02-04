@@ -18,11 +18,6 @@ public class PrintDataService extends Thread {
     private void startService() throws InterruptedException {
         while (!quitting) {
             System.out.println(taxi.toString());
-            System.out.println("OTHER TAXIS:");
-            for (DSTaxi t: taxi.getOtherTaxis()) {
-                System.out.println(t.toString());
-            }
-
             sleep(Constants.PRINT_DATA_SLEEP_TIME);
         }
     }

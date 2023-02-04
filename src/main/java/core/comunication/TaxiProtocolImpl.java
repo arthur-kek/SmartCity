@@ -138,7 +138,7 @@ public class TaxiProtocolImpl extends TaxiProtocolImplBase {
 
     @Override
     public void releaseTaxi(TaxiProtocolOuterClass.ReleaseTaxiRequest request, StreamObserver<TaxiProtocolOuterClass.ReleaseTaxiResponse> responseObserver) {
-        taxi.updateTaxiState(TaxiState.FREE);
+        taxi.releaseTaxi();
         responseObserver.onNext(buildReleaseTaxiMessage("OK"));
         responseObserver.onCompleted();
     }

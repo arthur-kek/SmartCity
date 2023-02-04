@@ -29,7 +29,7 @@ public class ManualRechargeService extends Thread {
             while (!quitting) {
                 try {
                     if (br.readLine().equals("--recharge")) {
-                        taxi.askForCharge();
+                        taxi.rechargeManually();
                         break;
                     }
                 } catch (IOException e) {

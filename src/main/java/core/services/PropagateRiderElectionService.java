@@ -73,16 +73,16 @@ public class PropagateRiderElectionService extends Thread {
     @Override
     public void run() {
         try {
-            System.out.println(SERVICE_NAME + " STARTED");
+            //System.out.println(SERVICE_NAME + " STARTED");
             propagateElection();
         } catch (InterruptedException ie) {
-            System.out.println(SERVICE_NAME + " INTERRUPTED");
+            //System.out.println(SERVICE_NAME + " INTERRUPTED");
             ie.printStackTrace();
         } catch (Throwable t) {
-            System.out.println(SERVICE_NAME + " GENERIC ERROR");
+            //System.out.println(SERVICE_NAME + " GENERIC ERROR");
             t.printStackTrace();
         } finally {
-            System.out.println(SERVICE_NAME + " TERMINATED");
+            //System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 }

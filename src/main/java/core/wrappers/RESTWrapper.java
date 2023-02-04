@@ -97,9 +97,9 @@ public class RESTWrapper {
                     .post(ClientResponse.class, statistic);
 
             if (response.getStatus() != 200) {
-                System.out.printf("PUSHING STATISTICS FOR %d ON %s GENERIC ERROR%n", taxiID, serverAddress);
+                //System.out.printf("PUSHING STATISTICS FOR %d ON %s GENERIC ERROR%n", taxiID, serverAddress);
             } else {
-                System.out.printf("PUSHING STATISTICS FOR %d ON %s IS COMPLETED%n", taxiID, serverAddress);
+               // System.out.printf("PUSHING STATISTICS FOR %d ON %s IS COMPLETED%n", taxiID, serverAddress);
             }
         } catch (ClientHandlerException e) {
             System.out.println("SERVER IS UNREACHABLE");
