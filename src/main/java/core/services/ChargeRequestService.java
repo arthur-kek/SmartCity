@@ -15,7 +15,7 @@ public class ChargeRequestService extends Thread {
     }
 
     public void askForCharging() throws InterruptedException {
-        System.out.printf("TAXI ID %d SENT CHARGE REQUEST%n", taxi.getId());
+        //System.out.printf("TAXI ID %d SENT CHARGE REQUEST%n", taxi.getId());
 
         ChargeRequestClient client = new ChargeRequestClient(taxi);
         client.start();
@@ -33,7 +33,7 @@ public class ChargeRequestService extends Thread {
             } else {
                 String offset = client.getChargeAnswer().getResponse();
                 taxi.updateCurrentClock(offset);
-                System.out.printf("TAXI ID %d IS WAITING FOR CHARGING STATION ID %d%n", taxi.getId(), taxi.getCurrentStation().getStation().getId());
+                //System.out.printf("TAXI ID %d IS WAITING FOR CHARGING STATION ID %d%n", taxi.getId(), taxi.getCurrentStation().getStation().getId());
             }
         }
     }

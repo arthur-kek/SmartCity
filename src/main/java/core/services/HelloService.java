@@ -38,7 +38,7 @@ public class HelloService extends Thread {
             printResponse(client.getHelloResponse(),
                     client.getOtherTaxi().getId());
 
-            if (client.getHelloResponse().getIsMaster()) {
+            if (client.getHelloResponse() != null && client.getHelloResponse().getIsMaster()) {
                 taxi.setOtherTaxiMaster(client.getOtherTaxi().getId());
             }
         }

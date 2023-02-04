@@ -19,6 +19,9 @@ public class MasterElectionService extends Thread {
         Taxi with minor ID becomes master
     */
     private void electAndNotifyMaster() throws InterruptedException {
+        if (taxi.getOtherTaxis().isEmpty()) {
+            return;
+        }
 
         DSTaxi possibleMaster = taxi.getOtherTaxis().get(0);
 
@@ -33,7 +36,7 @@ public class MasterElectionService extends Thread {
         client.join();
 
         if (client.getMasterResponse() != null && client.getMasterResponse().getOkMessage().equals("OK")) {
-            System.out.printf("NEW MASTER IS TAXI ID %d%n", possibleMaster.getId());
+            //System.out.printf("NEW MASTER IS TAXI ID %d%n", possibleMaster.getId());
         }
     }
 

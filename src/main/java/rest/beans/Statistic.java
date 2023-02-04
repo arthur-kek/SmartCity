@@ -67,7 +67,9 @@ public class Statistic {
     private String getPMList() {
         String s = "";
         for (Double d : pollutionList) {
-            s = s.concat(d + "|");
+            if (d != null) {
+                s = s.concat(d + "|");
+            }
         }
         return s;
     }

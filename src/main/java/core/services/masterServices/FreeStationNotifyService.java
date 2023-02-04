@@ -29,13 +29,13 @@ public class FreeStationNotifyService extends Thread {
     @Override
     public void run() {
         try {
-            System.out.println(SERVICE_NAME + " STARTED");
+            //System.out.println(SERVICE_NAME + " STARTED");
             sendTaxiToCharge();
         } catch (Throwable t) {
-            System.out.println(SERVICE_NAME + " GENERIC ERROR");
+            //System.out.println(SERVICE_NAME + " GENERIC ERROR");
             t.printStackTrace();
         } finally {
-            System.out.println(SERVICE_NAME + " TERMINATED");
+            //System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 }

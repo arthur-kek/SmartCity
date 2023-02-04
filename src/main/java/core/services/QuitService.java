@@ -18,11 +18,12 @@ public class QuitService extends Thread {
     @Override
     public void run() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("PLEASE, ENTER --exit TO LEAVE SMART CITY NETWORK");
         try {
             while (true) {
                 try {
-                    System.out.println("PLEASE, ENTER --exit TO LEAVE SMART CITY NETWORK");
-                    if (br.readLine().equals("--exit")) {
+                    String keyWord = br.readLine();
+                    if (keyWord.equals("--exit")) {
                         taxi.leaveNetwork();
                         break;
                     }

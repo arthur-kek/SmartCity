@@ -15,7 +15,7 @@ public class SensorService extends Thread {
     private PM10Simulator simulator;
     private PollutionBuffer buffer;
 
-    private boolean quitting;
+    private volatile boolean quitting;
 
     public SensorService(DSTaxi taxi) {
         this.taxi = taxi;

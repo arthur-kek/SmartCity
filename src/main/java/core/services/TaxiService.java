@@ -28,7 +28,7 @@ public class TaxiService extends Thread {
         System.out.println(SERVICE_NAME + " STARTED FOR TAXI ID " + taxi.getId() + " ON PORT " + taxi.getPort());
     }
 
-    private void exitService() throws InterruptedException {
+    public void exitService() throws InterruptedException {
         taxiServer.shutdownNow();
         taxiServer.awaitTermination();
     }

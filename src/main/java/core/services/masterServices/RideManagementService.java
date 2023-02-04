@@ -31,7 +31,7 @@ public class RideManagementService extends Thread {
 
         rideServer.start();
 
-        System.out.println(SERVICE_NAME + " STARTED FOR MASTER");
+        //System.out.println(SERVICE_NAME + " STARTED FOR MASTER");
     }
 
     private RidesQueue getRideMap() {
@@ -53,7 +53,7 @@ public class RideManagementService extends Thread {
                     RiderElectionService service = new RiderElectionService(this, masterService.getTaxi(), rideToNotify);
                     service.start();
                     service.join();
-                    System.out.printf("RIDE ID %d NOTIFIED%n", rideToNotify.getId());
+                    //System.out.printf("RIDE ID %d NOTIFIED%n", rideToNotify.getId());
                     waitABit();
                 }
             }
@@ -63,17 +63,17 @@ public class RideManagementService extends Thread {
 
     public synchronized String addRideToQueue(DSRide ride, int topic) {
         String resp = getRideMap().addToQueue(topic, ride);
-        System.out.printf("%s RECEIVED NEW RIDE ID %d, RESULT OF INSERTION IS: %s%n", SERVICE_NAME, ride.getId(), resp);
+        //System.out.printf("%s RECEIVED NEW RIDE ID %d, RESULT OF INSERTION IS: %s%n", SERVICE_NAME, ride.getId(), resp);
 
         return resp;
     }
 
     public synchronized void addNotElectedRideToQueue(DSRide ride) {
         getRideMap().reinsertNotElectedRide(ride.getRideDistrictId(), ride);
-        System.out.printf("NOT ELECTED RIDE ID %d, WAS REINSERTED TO THE QUEUE: %n", ride.getId());
+        //System.out.printf("NOT ELECTED RIDE ID %d, WAS REINSERTED TO THE QUEUE: %n", ride.getId());
     }
 
-    public synchronized void quitService() {
+    public void quitService() {
         quitting = true;
     }
 

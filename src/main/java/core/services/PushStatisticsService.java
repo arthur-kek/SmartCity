@@ -11,7 +11,7 @@ import java.util.Date;
 public class PushStatisticsService extends Thread {
 
     private final static String SERVICE_NAME = "PUSH_STATISTICS_SERVICE";
-    private boolean quitting;
+    private volatile boolean quitting;
 
     private DSTaxi taxi;
 
@@ -29,6 +29,10 @@ public class PushStatisticsService extends Thread {
         Statistic statistic = new Statistic(taxi.getTraveledKM(), taxi.getDoneRidesNumber(), taxi.getAveragePollution(), new Timestamp(date.getTime()).toString(), taxi.getBatteryLevel());
         RESTWrapper.getInstance().pushStatistics(Constants.ADM_SERVER_ADDRESS, taxi.getId(), statistic);
         taxi.dropAllStatistics();
+    }
+
+    public void pushLastAndQuit() {
+        quitting = true;
     }
 
     @Override

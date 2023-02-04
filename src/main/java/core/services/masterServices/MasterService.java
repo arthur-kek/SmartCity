@@ -25,9 +25,29 @@ public class MasterService extends Thread {
         chargeManagementService.start();
     }
 
+    private void quitChargeManagementService() throws InterruptedException {
+        chargeManagementService.quitService();
+        chargeManagementService.join();
+    }
+
     private void startRideManagementService() {
         rideManagementService = new RideManagementService(this);
         rideManagementService.start();
+    }
+
+    private void quitRideManagementService() throws InterruptedException {
+        rideManagementService.quitService();
+        rideManagementService.join();
+    }
+
+    public void quit() {
+        try {
+            quitChargeManagementService();
+            quitRideManagementService();
+            System.exit(0);
+        } catch (InterruptedException ie) {
+            ie.printStackTrace();
+        }
     }
 
 

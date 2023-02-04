@@ -48,7 +48,7 @@ public class RideListenerService extends Thread {
 
                     if (client.getNewRideResponse() != null) {
                         if (!client.getNewRideResponse().getMessage().equals("INSERTED")) {
-                            System.out.printf("TAXI ID %d CAN'T SEND RIDE ID %d TO SERVER. ERROR %s%n", taxi.getId(), ride.getId(), client.getNewRideResponse().getMessage());
+                            //System.out.printf("TAXI ID %d CAN'T SEND RIDE ID %d TO SERVER. ERROR %s%n", taxi.getId(), ride.getId(), client.getNewRideResponse().getMessage());
                         }
                     }
                 } catch (InvalidProtocolBufferException | InterruptedException e) {
@@ -68,7 +68,7 @@ public class RideListenerService extends Thread {
 
     public void subscribe(String topic) throws MqttException {
         mqttClient.subscribe(topic, Constants.DEFAULT_QOS);
-        System.out.printf("%s MQTT CLIENT SUBSCRIBED ON TOPIC %s%n", SERVICE_NAME, topic);
+        //System.out.printf("%s MQTT CLIENT SUBSCRIBED ON TOPIC %s%n", SERVICE_NAME, topic);
     }
 
     public void unsubscribe(String topic) throws MqttException {
@@ -81,6 +81,15 @@ public class RideListenerService extends Thread {
         setCallback();
         subscribe(topic);
     }
+
+    public void disconnect() {
+        try {
+            mqttClient.disconnect();
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public void run() {

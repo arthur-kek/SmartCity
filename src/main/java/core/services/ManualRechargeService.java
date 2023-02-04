@@ -11,19 +11,25 @@ public class ManualRechargeService extends Thread {
     private final static String SERVICE_NAME = "MANUAL_RECHARGE_SERVICE";
     private DSTaxi taxi;
 
+    private volatile boolean quitting;
+
     public ManualRechargeService(DSTaxi taxi) {
         this.taxi = taxi;
+    }
+
+    public void quit() {
+        quitting = true;
     }
 
     @Override
     public void run() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("PLEASE, ENTER --recharge TO RECHARGE THIS TAXI");
         try {
-            while (true) {
+            while (!quitting) {
                 try {
-                    System.out.println("PLEASE, ENTER --recharge TO RECHARGE THIS TAXI");
                     if (br.readLine().equals("--recharge")) {
-                        taxi.leaveNetwork();
+                        taxi.askForCharge();
                         break;
                     }
                 } catch (IOException e) {

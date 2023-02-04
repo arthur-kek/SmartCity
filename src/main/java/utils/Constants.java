@@ -15,6 +15,8 @@ public class Constants {
 
     public static final int RIDE_MANAGER_DEFAULT_PORT = 44445;
 
+    public static final int BUSY_WAIT_TIME = 10000;
+
     public static final int SMART_CITY_DIMENSION = 10;
 
     public static final int FULL_BATTERY_LEVEL = 100;
@@ -39,7 +41,7 @@ public class Constants {
 
     public static final int DEFAULT_QOS = 2;
 
-    public static final int PING_SLEEP_TIME = 2000;
+    public static final int PING_SLEEP_TIME = 500;
 
     public static final int PRINT_DATA_SLEEP_TIME = 10000;
 

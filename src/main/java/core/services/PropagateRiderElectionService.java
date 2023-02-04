@@ -58,12 +58,12 @@ public class PropagateRiderElectionService extends Thread {
                 }
 
                 if (nextTaxi == senderTaxi) {
-                    System.out.printf("PROPAGATE ELECTION CYCLE FOR RIDE ID %d FINISHED WITH SENDER ID %d AS BEST RIDER%n", ride.getId(), senderTaxi.getId());
+                    //System.out.printf("PROPAGATE ELECTION CYCLE FOR RIDE ID %d FINISHED WITH SENDER ID %d AS BEST RIDER%n", ride.getId(), senderTaxi.getId());
                     try {
                         senderTaxi.makeRide(ride);
                         break;
                     } catch (MakeRideException mre) {
-                        System.out.printf("MAKE_RIDE_EXEPTION FOR RIDE ID %d FOR ID %d ON %s%n", ride.getId(), senderTaxi.getId(), LogUtils.getCurrentTS());
+                        //System.out.printf("MAKE_RIDE_EXEPTION FOR RIDE ID %d FOR ID %d ON %s%n", ride.getId(), senderTaxi.getId(), LogUtils.getCurrentTS());
                     }
                 }
             } while (!response.equals("OK"));

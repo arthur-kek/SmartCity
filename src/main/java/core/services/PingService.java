@@ -14,7 +14,7 @@ import java.util.List;
 public class PingService extends Thread {
 
     private final static String SERVICE_NAME = "PING_SERVICE";
-    private boolean quitting;
+    private volatile boolean quitting;
     private DSTaxi taxi;
 
     RESTWrapper instance;

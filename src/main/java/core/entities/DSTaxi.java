@@ -38,7 +38,7 @@ public class DSTaxi {
     private List<Double> averagePollution = new ArrayList<>();
     private TaxiState state = TaxiState.FREE;
     private List<DSTaxi> otherTaxis = new ArrayList<>();
-
+    private boolean busy;
     private final Object lockKmTraveled = new Object();
     private final Object lockBatteryLevel = new Object();
     private final Object lockDoneRidesNumber = new Object();
@@ -51,7 +51,7 @@ public class DSTaxi {
     private final Object lockPosition = new Object();
     private final Object lockMaster = new Object();
     private final Object lockExit = new Object();
-
+    private final Object lockBusy = new Object();
     private TaxiService taxiService;
     private RegistrationService registrationService;
     private HelloService helloService;
@@ -133,14 +133,16 @@ public class DSTaxi {
             - if there are other taxis in the network this taxi propagate the election to next taxi
     */
     public void initRideElection(DSRide ride) {
-        updateTaxiState(TaxiState.IN_ELECTION);
-        if (getOtherTaxis().isEmpty()) {
-            System.out.printf("RIDE ID %d WAS WON BY TAXI ID %d%n", ride.getId(), this.id);
-            releaseParticipantsAndRide(ride, "");
-        } else {
-            System.out.printf("MASTER IS FREE. START ELECTION FOR RIDE ID %d FROM HERE ON %s%n", ride.getId(), LogUtils.getCurrentTS());
-            double mDistance = calculateDistance(ride.getStart());
-            propagateElection(ride, this.id, this.batteryLevel, mDistance, getTaxiAfterId(this.id), String.valueOf(this.id));
+        synchronized (lockExit) {
+            updateTaxiState(TaxiState.IN_ELECTION);
+            if (getOtherTaxis().isEmpty()) {
+                System.out.printf("RIDE ID %d WAS WON BY TAXI ID %d%n", ride.getId(), this.id);
+                releaseParticipantsAndRide(ride, "");
+            } else {
+                System.out.printf("MASTER IS FREE. START ELECTION FOR RIDE ID %d FROM HERE ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+                double mDistance = calculateDistance(ride.getStart());
+                propagateElection(ride, this.id, this.batteryLevel, mDistance, getTaxiAfterId(this.id), String.valueOf(this.id));
+            }
         }
     }
 
@@ -242,51 +244,57 @@ public class DSTaxi {
         if (getState() == TaxiState.ON_ROAD) {
             throw new MakeRideException();
         }
-        updateTaxiState(TaxiState.ON_ROAD);
-        try {
-            System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
-            Thread.sleep(Constants.RIDE_EXECUTION_TIME);
-        } catch (InterruptedException ie) {
-            ie.printStackTrace();
-        } finally {
-            System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
+        setBusy();
+            updateTaxiState(TaxiState.ON_ROAD);
+            try {
+                System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+                Thread.sleep(Constants.RIDE_EXECUTION_TIME);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            } finally {
+                System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
 
-            int distance = (int) (PositionUtils.CalculateDistance(getPosition(), ride.getStart())
-                    + PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination()));
+                int distance = (int) (PositionUtils.CalculateDistance(getPosition(), ride.getStart())
+                        + PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination()));
 
-            updateStatistics(distance, true);
-            updatePosition(ride.getDestination());
-            updateCurrentStation(PositionUtils.getChargingStationByPosition(getPosition()));
+                updateStatistics(distance, true);
+                updatePosition(ride.getDestination());
+                updateCurrentStation(PositionUtils.getChargingStationByPosition(getPosition()));
 
-            String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
-            decreaseBatteryLevel(distance);
+                String newTopic = PositionUtils.getTopicByPosition(ride.getDestination());
+                decreaseBatteryLevel(distance);
 
-            if (!getCurrentTopic().equals(newTopic)) {
-                String previousTopic = currentTopic;
-                updateCurrentTopic(newTopic);
-                System.out.println("CHANGE TOPIC\n");
-                try {
-                    updateCurrentDistrict(PositionUtils.getDistrictByPosition(getPosition()));
-                    rideListenerService.unsubscribe(previousTopic);
-                    rideListenerService.subscribe(newTopic);
-                } catch (MqttException e) {
-                    System.out.printf("ERROR SUBSCRIBING TOPIC %s%n", newTopic);
+                if (!getCurrentTopic().equals(newTopic)) {
+                    String previousTopic = currentTopic;
+                    updateCurrentTopic(newTopic);
+                    //System.out.println("CHANGE TOPIC\n");
+                    try {
+                        updateCurrentDistrict(PositionUtils.getDistrictByPosition(getPosition()));
+                        rideListenerService.unsubscribe(previousTopic);
+                        rideListenerService.subscribe(newTopic);
+                    } catch (MqttException e) {
+                        System.out.printf("ERROR SUBSCRIBING TOPIC %s%n", newTopic);
+                    }
                 }
+                updateTaxiState(TaxiState.FREE);
             }
-            updateTaxiState(TaxiState.FREE);
-        }
+        notifyFree();
     }
 
     /*
         ChargeManagementService notifies this taxi to recharge
     */
     public void recharge() throws ChargeStationException, WrongTaxiStateException, InterruptedException {
+        if (getState() == TaxiState.QUITTING) {
+            return;
+        }
         if (getCurrentStation().isBusy()) {
             throw new ChargeStationException();
         }
         if (getState() != TaxiState.LOW_BATTERY) {
             throw new WrongTaxiStateException(state, TaxiState.LOW_BATTERY);
         } else {
+            setBusy();
             getCurrentStation().updateState(true);
             updateTaxiState(TaxiState.CHARGING);
             System.out.printf("TAXI ID %d IS GOING TO A RECHARGE ON %s%n", this.id, LogUtils.getCurrentTS());
@@ -298,10 +306,12 @@ public class DSTaxi {
             updateBatteryLevel(Constants.FULL_BATTERY_LEVEL, true);
             getCurrentStation().updateState(false);
 
-            System.out.printf("TAXI ID %d IS FULLY CHARGED %s%n", this.id, LogUtils.getCurrentTS());
+            //System.out.printf("TAXI ID %d IS FULLY CHARGED %s%n", this.id, LogUtils.getCurrentTS());
             updatePosition(newPosition);
             updateTaxiState(TaxiState.FREE);
         }
+
+        notifyFree();
     }
 
     /*
@@ -310,9 +320,13 @@ public class DSTaxi {
     public void decreaseBatteryLevel(int points) throws InterruptedException {
         updateBatteryLevel(points, false);
         if (getBatteryLevel() <= Constants.CRITICAL_BATTERY_LEVEL) {
-            updateTaxiState(TaxiState.LOW_BATTERY);
-            startChargeRequestService();
+            askForCharge();
         }
+    }
+
+    public void askForCharge() throws InterruptedException {
+        updateTaxiState(TaxiState.LOW_BATTERY);
+        startChargeRequestService();
     }
 
     public void dropAllStatistics() {
@@ -325,9 +339,26 @@ public class DSTaxi {
 
     public void leaveNetwork() throws InterruptedException {
         synchronized (lockExit) {
-            state = TaxiState.QUITTING;
+            System.out.println("START QUITTING");
+            updateTaxiState(TaxiState.QUITTING);
+            if (isMaster()) {
+                masterService.quit();
+                updateMaster(false);
+            }
+
+            if (getBusy()) {
+                waitUntilBecomeFree(Constants.BUSY_WAIT_TIME);
+            }
+
+            taxiService.exitService();
+            quitRideListenerService();
+            quitPingService();
+            quitPrintDataService();
+            quitSensorService();
+            quitPushStatisticsService();
+
             leaveAdmServer();
-            lockExit.notifyAll();
+            notifyExit();
         }
     }
 
@@ -377,7 +408,7 @@ public class DSTaxi {
             if (state != TaxiState.LOW_BATTERY && getBatteryLevel() < Constants.CRITICAL_BATTERY_LEVEL) {
                 return;
             }
-            if (state != TaxiState.QUITTING) {
+            if (this.state != TaxiState.QUITTING) {
                 this.state = state;
             }
         }
@@ -435,6 +466,12 @@ public class DSTaxi {
         }
     }
 
+    public void notifyExit() {
+        synchronized (lockExit) {
+            lockExit.notifyAll();
+        }
+    }
+
     // Region run new taxi
     public static void main(String[] args) {
         try {
@@ -444,6 +481,7 @@ public class DSTaxi {
             System.out.println("TAXI GENERIC ERROR");
             t.printStackTrace();
         } finally {
+            System.out.println("TAXI QUITTED");
             System.exit(0);
         }
     }
@@ -469,9 +507,14 @@ public class DSTaxi {
         waitExitCall();
     }
 
-    private void startRideListenerService() throws InterruptedException {
+    private void startRideListenerService() {
         rideListenerService = new RideListenerService(this, getCurrentTopic());
         rideListenerService.start();
+    }
+
+    private void quitRideListenerService() throws InterruptedException {
+        rideListenerService.disconnect();
+        rideListenerService.join();
     }
 
     private void startTaxiService() throws InterruptedException {
@@ -480,14 +523,19 @@ public class DSTaxi {
         taxiService.join();
     }
 
-    private void startManualRechargeService() throws InterruptedException {
+    private void startManualRechargeService() {
         manualRechargeService = new ManualRechargeService(this);
         manualRechargeService.start();
     }
 
-    private void startSensorService() throws InterruptedException {
+    private void startSensorService() {
         sensorService = new SensorService(this);
         sensorService.start();
+    }
+
+    private void quitSensorService() throws InterruptedException {
+        sensorService.quitService();
+        sensorService.join();
     }
 
     private void startChargeRequestService() throws InterruptedException {
@@ -502,9 +550,14 @@ public class DSTaxi {
         masterElectionService.join();
     }
 
-    private void startPrintDataService() throws InterruptedException {
+    private void startPrintDataService() {
         printDataService = new PrintDataService(this);
         printDataService.start();
+    }
+
+    private void quitPrintDataService() throws InterruptedException {
+        printDataService.quitService();
+        printDataService.join();
     }
 
     private void startQuitService() {
@@ -515,6 +568,11 @@ public class DSTaxi {
     private void startPingService() {
         pingService = new PingService(this);
         pingService.start();
+    }
+
+    private void quitPingService() throws InterruptedException {
+        printDataService.quitService();
+        printDataService.join();
     }
 
     private void startRegistrationService() throws InterruptedException {
@@ -529,9 +587,14 @@ public class DSTaxi {
         helloService.join();
     }
 
-    private void startPushStatisticsService() throws InterruptedException {
+    private void startPushStatisticsService() {
         pushStatisticsService = new PushStatisticsService(this);
         pushStatisticsService.start();
+    }
+
+    private void quitPushStatisticsService() throws InterruptedException {
+        pushStatisticsService.pushLastAndQuit();
+        pushStatisticsService.join();
     }
 
     private void startMasterService() throws InterruptedException {
@@ -549,6 +612,8 @@ public class DSTaxi {
     public void electMaster() throws InterruptedException {
         if (!getOtherTaxis().isEmpty()) {
             startMasterElectionService();
+        } else {
+            setMaster();
         }
     }
 
@@ -678,6 +743,42 @@ public class DSTaxi {
     public void setCurrentTopic(String currentTopic) {
         synchronized (lockCurrentTopic) {
             this.currentTopic = currentTopic;
+        }
+    }
+
+    public void setBusy(boolean busy) {
+        synchronized (lockBusy) {
+            this.busy = busy;
+        }
+    }
+
+    public boolean getBusy() {
+        synchronized (lockBusy) {
+            return busy;
+        }
+    }
+
+
+    public void setBusy() throws InterruptedException {
+        synchronized (lockBusy) {
+            if (getBusy()) {
+                lockBusy.wait();
+            }
+            setBusy(true);
+        }
+    }
+
+    public void notifyFree() {
+        synchronized (lockBusy) {
+            setBusy(false);
+            lockBusy.notifyAll();
+        }
+    }
+
+    public void waitUntilBecomeFree(long timeToWait) throws InterruptedException {
+        synchronized (lockBusy) {
+            if (getBusy())
+                lockBusy.wait(timeToWait);
         }
     }
 

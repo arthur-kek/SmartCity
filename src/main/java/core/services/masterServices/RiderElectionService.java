@@ -32,7 +32,7 @@ public class RiderElectionService extends Thread {
                 try {
                     master.makeRide(ride);
                 } catch (MakeRideException mre) {
-                    System.out.printf("MAKE_RIDE_EXEPTION FOR RIDE ID %d FOR ID %d ON %s%n", ride.getId(), master.getId(), LogUtils.getCurrentTS());
+                   // System.out.printf("MAKE_RIDE_EXEPTION FOR RIDE ID %d FOR ID %d ON %s%n", ride.getId(), master.getId(), LogUtils.getCurrentTS());
                 }
             } else {
                 master.initRideElection(ride);
@@ -40,19 +40,19 @@ public class RiderElectionService extends Thread {
         } else {
             targetTaxi = master.getTaxiAfterId(id);
             id = targetTaxi.getId();
-            System.out.printf("TRYING TO ELECT TAXI ID %d AS INITIATOR FOR RIDE ID %d ON %s%n", targetTaxi.getId(), ride.getId(), LogUtils.getCurrentTS());
+            //System.out.printf("TRYING TO ELECT TAXI ID %d AS INITIATOR FOR RIDE ID %d ON %s%n", targetTaxi.getId(), ride.getId(), LogUtils.getCurrentTS());
             while (id != master.getId()) {
                 RideElectionNotifyClient client = new RideElectionNotifyClient(targetTaxi, ride, service);
                 client.start();
                 client.join();
 
                 if (client.getResponse() != null && client.getResponse().getResponse().equals("OK")) {
-                    System.out.printf("TAXI ID %d ELECTED AS INITIATOR FOR RIDE ID %d ON %s%n", targetTaxi.getId(), ride.getId(), LogUtils.getCurrentTS());
+                    //System.out.printf("TAXI ID %d ELECTED AS INITIATOR FOR RIDE ID %d ON %s%n", targetTaxi.getId(), ride.getId(), LogUtils.getCurrentTS());
                     break;
                 } else {
                     targetTaxi = master.getTaxiAfterId(targetTaxi.getId());
                     id = targetTaxi.getId();
-                    System.out.printf("TRYING TO ELECT TAXI ID %d AS INITIATOR FOR RIDE ID %d ON %s%n", targetTaxi.getId(), ride.getId(), LogUtils.getCurrentTS());
+                    //System.out.printf("TRYING TO ELECT TAXI ID %d AS INITIATOR FOR RIDE ID %d ON %s%n", targetTaxi.getId(), ride.getId(), LogUtils.getCurrentTS());
                 }
             }
             if (id == master.getId()) {
@@ -63,20 +63,20 @@ public class RiderElectionService extends Thread {
 
 
     private void notifyNonElectedRide() {
-        System.out.printf("RIDER NOT ELECTED FOR RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+        //System.out.printf("RIDER NOT ELECTED FOR RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
         service.addNotElectedRideToQueue(ride);
     }
 
     @Override
     public void run() {
         try {
-            System.out.println(SERVICE_NAME + " STARTED");
+            //System.out.println(SERVICE_NAME + " STARTED");
             notifyTaxi();
         } catch (Throwable t) {
-            System.out.println(SERVICE_NAME + " GENERIC ERROR");
+            //System.out.println(SERVICE_NAME + " GENERIC ERROR");
             t.printStackTrace();
         } finally {
-            System.out.println(SERVICE_NAME + " TERMINATED");
+            //System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 }
