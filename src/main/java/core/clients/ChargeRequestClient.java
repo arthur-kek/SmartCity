@@ -52,7 +52,6 @@ public class ChargeRequestClient extends Thread {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: Print some error message
                 channel.shutdownNow();
             }
 

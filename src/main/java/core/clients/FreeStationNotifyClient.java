@@ -8,7 +8,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 import utils.Constants;
-import utils.LogUtils;
 
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +48,6 @@ public class FreeStationNotifyClient extends Thread {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: Print some error message
                 channel.shutdownNow();
             }
 
