@@ -2,14 +2,18 @@ package core.services.masterServices;
 
 import core.comunication.ServiceProtocolImpl;
 import core.entities.DSTaxi;
+import core.entities.DSTaxiOrdered;
 import core.extensions.MapQueue;
 import core.wrappers.ChargeQueue;
 import core.wrappers.ChargingStations;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import utils.Constants;
+import utils.TaxisUtils;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.Random;
 
 public class ChargeManagementService extends Thread {
 
@@ -34,8 +38,8 @@ public class ChargeManagementService extends Thread {
         quitting = true;
     }
 
-    private MapQueue<DSTaxi> getChargeMap() {
-        return ChargeQueue.getInstance().getChargeMap();
+    private ChargeQueue getChargeQueue() {
+        return ChargeQueue.getInstance();
     }
 
     public void startCommunicationServer() throws IOException {
@@ -56,54 +60,79 @@ public class ChargeManagementService extends Thread {
         while (!quitting) {
 
             if (!chargingStations.isFirstStationBusy()) {
-                DSTaxi taxiToCharge = getChargeMap().getFromQueue(1);
+                DSTaxi taxiToCharge = getChargeQueue().getFromQueue(1);
                 if (taxiToCharge != null) {
                     sendTaxiToCharge(taxiToCharge);
                 }
             }
 
             if (!chargingStations.isSecondStationBusy()) {
-                DSTaxi taxiToCharge = getChargeMap().getFromQueue(2);
+                DSTaxi taxiToCharge = getChargeQueue().getFromQueue(2);
                 if (taxiToCharge != null) {
                     sendTaxiToCharge(taxiToCharge);
                 }
             }
 
             if (!chargingStations.isThirdStationBusy()) {
-                DSTaxi taxiToCharge = getChargeMap().getFromQueue(3);
+                DSTaxi taxiToCharge = getChargeQueue().getFromQueue(3);
                 if (taxiToCharge != null) {
                     sendTaxiToCharge(taxiToCharge);
                 }
             }
 
             if (!chargingStations.isFourthStationBusy()) {
-                DSTaxi taxiToCharge = getChargeMap().getFromQueue(4);
+                DSTaxi taxiToCharge = getChargeQueue().getFromQueue(4);
                 if (taxiToCharge != null) {
                     sendTaxiToCharge(taxiToCharge);
                 }
             }
 
+            waitABit();
+
         }
+    }
+
+    private synchronized void waitABit() throws InterruptedException {
+        int offset = new Random().nextInt(1001 - 100) + 100;
+        wait(Constants.WAIT_TIME_UNTIL_CHECK_CHARGE_QUEUE + offset);
     }
 
     /*
         If taxi, after being notified, respond ok to charge notify, this method removes taxi from charge queue
     */
     public void removeTaxiFromQueue(int idQueue) {
-        getChargeMap().removeFromQueue(idQueue);
+        getChargeQueue().removeTaxiFromQueue(idQueue);
     }
 
     /*
         Receive grpc request to charge from taxi, if the queue is empty the method sens taxi immediately to charge,
         otherwise it adds taxi to charge queue
+        if taxi's clock is broken so method try to align it by confronting it with his own, then inserts taxi to queue ordered by ts of request of other taxis
     */
-    public String addTaxiToChargeQueue(DSTaxi taxi) {
+    public String addTaxiToChargeQueue(DSTaxi taxi, String timestamp) {
         System.out.printf("%s RECEIVED RECHARGE REQUEST FROM %d%n", SERVICE_NAME, taxi.getId());
-        if (getChargeMap().getFromQueue(taxi.getCurrentStation().getStation().getId()) == null) {
+/*        if (getChargeQueue().getFromQueue(taxi.getCurrentStation().getStation().getId()) == null) {
             return "OK";
+        }*/
+        String response = "";
+        try {
+            long offset = getOffset(timestamp);
+            long taxiMillis = TaxisUtils.castTsToLong(timestamp);
+            getChargeQueue().addToQueue(taxi.getCurrentStation().getStation().getId(), taxi, taxiMillis + offset);
+            response = String.valueOf(offset);
+        } catch (ParseException pe) {
+            System.out.println("PARSE ERROR");
         }
-        getChargeMap().addToQueue(taxi.getCurrentStation().getStation().getId(), taxi);
-        return "WAIT";
+        return response;
+    }
+
+    private long getOffset(String ts) {
+        try {
+            return TaxisUtils.calculateOffset(ts, System.currentTimeMillis());
+        } catch (ParseException pe) {
+            System.out.println("PARSE ERROR");
+        }
+        return 0;
     }
 
     /*

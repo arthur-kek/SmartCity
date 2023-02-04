@@ -13,6 +13,7 @@ message ChargeRequest {
 message ChargeResponse {
   string response = 1;
   int32 taxiInQueue = 2;
+  int64 offset = 3;
 }
 
 message NotifyNewRideToServer {

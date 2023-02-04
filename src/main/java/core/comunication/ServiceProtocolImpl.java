@@ -33,7 +33,7 @@ public class ServiceProtocolImpl extends ServiceProtocolGrpc.ServiceProtocolImpl
     public void askForCharge(ServiceProtocolOuterClass.ChargeRequest request, StreamObserver<ServiceProtocolOuterClass.ChargeResponse> responseObserver) {
         DSTaxi taxi = new DSTaxi(request);
         if (service instanceof ChargeManagementService) {
-            String response = ((ChargeManagementService) service).addTaxiToChargeQueue(taxi);
+            String response = ((ChargeManagementService) service).addTaxiToChargeQueue(taxi, request.getTs());
             responseObserver.onNext(buildChargeResponse(response));
             responseObserver.onCompleted();
         }

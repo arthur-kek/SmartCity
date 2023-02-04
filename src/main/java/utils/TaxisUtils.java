@@ -2,22 +2,13 @@ package utils;
 
 import core.entities.DSTaxi;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class TaxisUtils {
-
-    public static boolean isIdInsideParticipants(String participants, int taxiId) {
-        String[] idList = participants.split(">");
-
-        for (String id : idList) {
-            if (id.equals(String.valueOf(taxiId))) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public static List<DSTaxi> getTaxisToRelease(String participants, List<DSTaxi> allTaxis) {
 
@@ -41,5 +32,15 @@ public class TaxisUtils {
             }
         }
         return null;
+    }
+
+    public static long calculateOffset(String taxiTs, long masterTs) throws ParseException {
+        Date dateTime = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(taxiTs);
+        return dateTime.getTime() - masterTs;
+    }
+
+    public static long castTsToLong(String taxiTs) throws ParseException {
+        Date dateTime = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(taxiTs);
+        return dateTime.getTime();
     }
 }

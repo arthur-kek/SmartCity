@@ -67,8 +67,8 @@ message ReleaseTaxiRequest {
   string releaseMessage = 1;
 }
 
-message releaseTaxiResponse {
-  string Response = 1;
+message ReleaseTaxiResponse {
+  string response = 1;
 }
 
 

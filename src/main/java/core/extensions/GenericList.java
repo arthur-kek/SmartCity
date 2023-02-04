@@ -36,6 +36,10 @@ public class GenericList<T> {
         genericList.add(0, obj);
     }
 
+    public synchronized void insertAtCertainPosition(int position, T obj) {
+        genericList.add(position, obj);
+    }
+
     public synchronized T get(int id) {
         return genericList.get(id);
     }

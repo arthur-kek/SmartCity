@@ -130,14 +130,14 @@ public class TaxiProtocolImpl extends TaxiProtocolImplBase {
         }
     }
 
-    private TaxiProtocolOuterClass.releaseTaxiResponse buildReleaseTaxiMessage(String message) {
-        return TaxiProtocolOuterClass.releaseTaxiResponse.newBuilder()
+    private TaxiProtocolOuterClass.ReleaseTaxiResponse buildReleaseTaxiMessage(String message) {
+        return TaxiProtocolOuterClass.ReleaseTaxiResponse.newBuilder()
                 .setResponse(message)
                 .build();
     }
 
     @Override
-    public void releaseTaxi(TaxiProtocolOuterClass.releaseTaxiRequest request, StreamObserver<TaxiProtocolOuterClass.releaseTaxiResponse> responseObserver) {
+    public void releaseTaxi(TaxiProtocolOuterClass.ReleaseTaxiRequest request, StreamObserver<TaxiProtocolOuterClass.ReleaseTaxiResponse> responseObserver) {
         taxi.updateTaxiState(TaxiState.FREE);
         responseObserver.onNext(buildReleaseTaxiMessage("OK"));
         responseObserver.onCompleted();

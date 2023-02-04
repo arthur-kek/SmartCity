@@ -56,6 +56,12 @@ public class MapQueue<T> {
         map.put(key, temp);
     }
 
+    public synchronized void insertAtCertainPosition(int key, int position, T e) {
+        GenericList<T> temp = map.get(key);
+        temp.insertAtCertainPosition(position, e);
+        map.put(key, temp);
+    }
+
     public synchronized GenericList<T> getEntireQueue(int key) {
         return map.get(key);
     }

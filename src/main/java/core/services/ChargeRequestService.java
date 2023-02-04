@@ -21,16 +21,20 @@ public class ChargeRequestService extends Thread {
         client.start();
         client.join();
 
-        if (client.getChargeAnswer() != null && client.getChargeAnswer().getResponse().equals("OK")) {
-            try {
-                taxi.recharge();
-            } catch (ChargeStationException cse) {
-                System.out.println(cse.getMessage());
-            } catch (WrongTaxiStateException e) {
-                System.out.println(e.getMessage());
+        if (client.getChargeAnswer() != null) {
+            if (client.getChargeAnswer().getResponse().equals("OK")) {
+                try {
+                    taxi.recharge();
+                } catch (ChargeStationException cse) {
+                    System.out.println(cse.getMessage());
+                } catch (WrongTaxiStateException e) {
+                    System.out.println(e.getMessage());
+                }
+            } else {
+                String offset = client.getChargeAnswer().getResponse();
+                taxi.updateCurrentClock(offset);
+                System.out.printf("TAXI ID %d IS WAITING FOR CHARGING STATION ID %d%n", taxi.getId(), taxi.getCurrentStation().getStation().getId());
             }
-        } else {
-            System.out.printf("TAXI ID %d IS WAITING FOR CHARGING STATION ID %d%n", taxi.getId(), taxi.getCurrentStation().getStation().getId());
         }
     }
 

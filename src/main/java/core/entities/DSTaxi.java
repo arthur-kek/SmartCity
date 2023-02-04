@@ -345,6 +345,10 @@ public class DSTaxi {
 
     /* region updates */
 
+    public void updateCurrentClock(String offset) {
+        // Add offset to my own clock for synchronize with charge manager
+    }
+
     private void updateStatistics(int km, boolean didRide) {
         updateKmTraveled(km, false);
         if (didRide) {
@@ -370,6 +374,9 @@ public class DSTaxi {
 
     public void updateTaxiState(TaxiState state) {
         synchronized (lockState) {
+            if (state != TaxiState.LOW_BATTERY && getBatteryLevel() < Constants.CRITICAL_BATTERY_LEVEL) {
+                return;
+            }
             if (state != TaxiState.QUITTING) {
                 this.state = state;
             }

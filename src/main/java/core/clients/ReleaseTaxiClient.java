@@ -15,19 +15,19 @@ public class ReleaseTaxiClient extends Thread {
     private DSTaxi mainTaxi;
     private DSTaxi otherTaxi;
 
-    private TaxiProtocolOuterClass.releaseTaxiResponse releaseTaxiResponse;
+    private TaxiProtocolOuterClass.ReleaseTaxiResponse releaseTaxiResponse;
 
     public ReleaseTaxiClient(DSTaxi mainTaxi, DSTaxi otherTaxi) {
         this.mainTaxi = mainTaxi;
         this.otherTaxi = otherTaxi;
     }
 
-    public TaxiProtocolOuterClass.releaseTaxiResponse getReleaseTaxiResponse() {
+    public TaxiProtocolOuterClass.ReleaseTaxiResponse getReleaseTaxiResponse() {
         return releaseTaxiResponse;
     }
 
-    public TaxiProtocolOuterClass.releaseTaxiRequest buildRequest() {
-        return TaxiProtocolOuterClass.releaseTaxiRequest.newBuilder()
+    public TaxiProtocolOuterClass.ReleaseTaxiRequest buildRequest() {
+        return TaxiProtocolOuterClass.ReleaseTaxiRequest.newBuilder()
                 .setReleaseMessage("RELEASED")
                 .build();
     }
@@ -37,10 +37,10 @@ public class ReleaseTaxiClient extends Thread {
         final ManagedChannel channel = ManagedChannelBuilder.forTarget(targetTaxiAddress).usePlaintext().build();
         TaxiProtocolGrpc.TaxiProtocolStub stub = TaxiProtocolGrpc.newStub(channel);
 
-        TaxiProtocolOuterClass.releaseTaxiRequest ping = buildRequest();
-        stub.releaseTaxi(ping, new StreamObserver<TaxiProtocolOuterClass.releaseTaxiResponse>() {
+        TaxiProtocolOuterClass.ReleaseTaxiRequest release = buildRequest();
+        stub.releaseTaxi(release, new StreamObserver<TaxiProtocolOuterClass.ReleaseTaxiResponse>() {
             @Override
-            public void onNext(TaxiProtocolOuterClass.releaseTaxiResponse value) {
+            public void onNext(TaxiProtocolOuterClass.ReleaseTaxiResponse value) {
                 releaseTaxiResponse = value;
             }
 

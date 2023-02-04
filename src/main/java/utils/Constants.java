@@ -27,6 +27,8 @@ public class Constants {
 
     public static final int WAIT_TIME_UNTIL_CHECK_RIDES_QUEUE = 2000;
 
+    public static final int WAIT_TIME_UNTIL_CHECK_CHARGE_QUEUE = 5000;
+
     public static final int RIDE_EXECUTION_TIME = 5000;
 
     public static final int FULL_CHARGING_TIME = 10000;

@@ -34,7 +34,7 @@ public class ChargeRequestClient extends Thread {
                         .setX(mainTaxi.getPosition().getX())
                         .setY(mainTaxi.getPosition().getY())
                         .build())
-                .setTs(LogUtils.getCurrentTS())
+                .setTs(LogUtils.getCurrentTSWithOffset())
                 .build();
     }
 
