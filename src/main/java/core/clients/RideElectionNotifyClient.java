@@ -66,7 +66,6 @@ public class RideElectionNotifyClient extends Thread {
 
             @Override
             public void onError(Throwable t) {
-                // TODO: Print some error message
                 channel.shutdownNow();
             }
 
@@ -82,12 +81,9 @@ public class RideElectionNotifyClient extends Thread {
     @Override
     public void run() {
         try {
-            // TODO: Print start presentation
             notifyTaxi();
         } catch (Throwable t) {
-            // TODO: Print some error message
-        } finally {
-            // TODO: Presentation with otherTaxiId is completed
+            t.printStackTrace();
         }
     }
 

@@ -137,8 +137,7 @@ public class DSTaxi {
             setBusy(true);
             updateTaxiState(TaxiState.IN_ELECTION);
             if (getOtherTaxis().isEmpty()) {
-                //System.out.printf("RIDE ID %d WAS WON BY TAXI ID %d%n", ride.getId(), this.id);
-                releaseParticipantsAndRide(ride, "");
+               releaseParticipantsAndRide(ride, "");
             } else {
                 //System.out.printf("MASTER IS FREE. START ELECTION FOR RIDE ID %d FROM HERE ON %s%n", ride.getId(), LogUtils.getCurrentTS());
                 double mDistance = calculateDistance(ride.getStart());
@@ -251,16 +250,16 @@ public class DSTaxi {
             throw new MakeRideException();
         }
         if (!getBusy()) {
-            setBusy();
+            setBusy(true);
         }
         updateTaxiState(TaxiState.ON_ROAD);
         try {
-            //System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
+            System.out.printf("ON RIDE ID %d ON %s%n", ride.getId(), LogUtils.getCurrentTS());
             Thread.sleep(Constants.RIDE_EXECUTION_TIME);
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         } finally {
-            //System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
+            System.out.printf("RIDE ID %d DONE %s%n", ride.getId(), LogUtils.getCurrentTS());
 
             int distance = (int) (PositionUtils.CalculateDistance(getPosition(), ride.getStart())
                     + PositionUtils.CalculateDistance(ride.getStart(), ride.getDestination()));
@@ -878,6 +877,17 @@ public class DSTaxi {
                 "id=" + id +
                 ", port=" + port +
                 ", serverAddress='" + serverAddress + '\'' +
+                ", batteryLevel=" + batteryLevel +
+                ", position=" + position +
+                ", state=" + state +
+                '}';
+    }
+
+    public String describe() {
+        return "Taxi{" +
+                "id=" + id +
+                ", traveledKM=" + traveledKM +
+                ", doneRidesNumber='" + doneRidesNumber + '\'' +
                 ", batteryLevel=" + batteryLevel +
                 ", position=" + position +
                 ", state=" + state +

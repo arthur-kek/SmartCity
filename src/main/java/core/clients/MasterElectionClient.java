@@ -33,7 +33,7 @@ public class MasterElectionClient extends Thread { ;
                 .build();
     }
 
-    private void ping() throws InterruptedException {
+    private void setMaster() throws InterruptedException {
         String targetTaxiAddress = String.format("%s:%s", Constants.ADM_SERVER_HOSTNAME, taxi.getPort());
         final ManagedChannel channel = ManagedChannelBuilder.forTarget(targetTaxiAddress).usePlaintext().build();
         TaxiProtocolGrpc.TaxiProtocolStub stub = TaxiProtocolGrpc.newStub(channel);
@@ -62,12 +62,9 @@ public class MasterElectionClient extends Thread { ;
     @Override
     public void run() {
         try {
-            // TODO: Print start presentation
-            ping();
+            setMaster();
         } catch (Throwable t) {
-            // TODO: Print some error message
-        } finally {
-            // TODO: Presentation with otherTaxiId is completed
+            t.printStackTrace();
         }
     }
 }

@@ -22,11 +22,17 @@ public class TaxiReleaseService extends Thread {
 
         List<DSTaxi> taxiToRelease = TaxisUtils.getTaxisToRelease(participants, taxi.getOtherTaxis());
 
+        if (taxiToRelease.isEmpty()) {
+            return;
+        }
+
         List<ReleaseTaxiClient> clients = new ArrayList<>();
         for (DSTaxi t : taxiToRelease) {
-            ReleaseTaxiClient client = new ReleaseTaxiClient(taxi, t);
-            clients.add(client);
-            client.start();
+            if (t != null) {
+                ReleaseTaxiClient client = new ReleaseTaxiClient(taxi, t);
+                clients.add(client);
+                client.start();
+            }
         }
 
         for (ReleaseTaxiClient rtc : clients) {

@@ -61,12 +61,9 @@ public class ReleaseTaxiClient extends Thread {
     @Override
     public void run() {
         try {
-            // TODO: Print start presentation
             releaseTaxi();
         } catch (Throwable t) {
-            // TODO: Print some error message
-        } finally {
-            // TODO: Presentation with otherTaxiId is completed
+           t.printStackTrace();
         }
     }
 

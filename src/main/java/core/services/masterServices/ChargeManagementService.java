@@ -49,8 +49,6 @@ public class ChargeManagementService extends Thread {
                 .build();
 
         chargeServer.start();
-
-        //System.out.println(SERVICE_NAME + " STARTED FOR MASTER");
     }
 
     /*
@@ -110,7 +108,6 @@ public class ChargeManagementService extends Thread {
         if taxi's clock is broken so method try to align it by confronting it with his own, then inserts taxi to queue ordered by ts of request of other taxis
     */
     public String addTaxiToChargeQueue(DSTaxi taxi, String timestamp) {
-        //System.out.printf("%s RECEIVED RECHARGE REQUEST FROM %d%n", SERVICE_NAME, taxi.getId());
         if (getChargeQueue().getFromQueue(taxi.getCurrentStation().getStation().getId()) == null) {
             return "OK";
         }

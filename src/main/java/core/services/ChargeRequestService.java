@@ -15,8 +15,6 @@ public class ChargeRequestService extends Thread {
     }
 
     public void askForCharging() throws InterruptedException {
-        //System.out.printf("TAXI ID %d SENT CHARGE REQUEST%n", taxi.getId());
-
         ChargeRequestClient client = new ChargeRequestClient(taxi);
         client.start();
         client.join();
@@ -41,17 +39,17 @@ public class ChargeRequestService extends Thread {
     @Override
     public void run() {
         try {
-            System.out.println(SERVICE_NAME + " STARTED");
+            //System.out.println(SERVICE_NAME + " STARTED");
             askForCharging();
 
         } catch (InterruptedException ie) {
-            System.out.println(SERVICE_NAME + " INTERRUPTED");
+            //System.out.println(SERVICE_NAME + " INTERRUPTED");
             ie.printStackTrace();
         } catch (Throwable t) {
-            System.out.println(SERVICE_NAME + " GENERIC ERROR");
+           // System.out.println(SERVICE_NAME + " GENERIC ERROR");
             t.printStackTrace();
         } finally {
-            System.out.println(SERVICE_NAME + " TERMINATED");
+           // System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 }

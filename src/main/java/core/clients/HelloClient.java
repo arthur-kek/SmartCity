@@ -24,20 +24,8 @@ public class HelloClient extends Thread {
         this.otherTaxi = otherTaxi;
     }
 
-    public DSTaxi getMainTaxi() {
-        return mainTaxi;
-    }
-
-    public void setMainTaxi(DSTaxi mainTaxi) {
-        this.mainTaxi = mainTaxi;
-    }
-
     public DSTaxi getOtherTaxi() {
         return otherTaxi;
-    }
-
-    public void setOtherTaxi(DSTaxi otherTaxi) {
-        this.otherTaxi = otherTaxi;
     }
 
     public HelloResponse getHelloResponse() {
@@ -86,12 +74,9 @@ public class HelloClient extends Thread {
     @Override
     public void run() {
         try {
-            // TODO: Print start presentation
             sayHello();
         } catch (Throwable t) {
-            // TODO: Print some error message
-        } finally {
-            // TODO: Presentation with otherTaxiId is completed
+            t.printStackTrace();
         }
     }
 }

@@ -39,20 +39,20 @@ public class PushStatisticsService extends Thread {
     public void run() {
         try {
             waitABit();
-            System.out.println(SERVICE_NAME + " STARTED");
+            //System.out.println(SERVICE_NAME + " STARTED");
             while(!quitting) {
                 push();
                 waitABit();
             }
             push();
         } catch (InterruptedException ie) {
-            System.out.println(SERVICE_NAME + " INTERRUPTED");
+            //System.out.println(SERVICE_NAME + " INTERRUPTED");
             ie.printStackTrace();
         } catch (Throwable t) {
-            System.out.println(SERVICE_NAME + " GENERIC ERROR");
+            //System.out.println(SERVICE_NAME + " GENERIC ERROR");
             t.printStackTrace();
         } finally {
-            System.out.println(SERVICE_NAME + " TERMINATED");
+            //System.out.println(SERVICE_NAME + " TERMINATED");
         }
     }
 }

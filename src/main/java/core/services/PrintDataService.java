@@ -17,7 +17,7 @@ public class PrintDataService extends Thread {
 
     private void startService() throws InterruptedException {
         while (!quitting) {
-            System.out.println(taxi.toString());
+            System.out.println(taxi.describe());
             sleep(Constants.PRINT_DATA_SLEEP_TIME);
         }
     }

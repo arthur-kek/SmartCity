@@ -36,7 +36,7 @@ public class MasterElectionService extends Thread {
         client.join();
 
         if (client.getMasterResponse() != null && client.getMasterResponse().getOkMessage().equals("OK")) {
-            //System.out.printf("NEW MASTER IS TAXI ID %d%n", possibleMaster.getId());
+            System.out.printf("NEW MASTER IS TAXI ID %d%n", possibleMaster.getId());
         }
     }
 

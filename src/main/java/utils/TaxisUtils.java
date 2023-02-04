@@ -17,6 +17,9 @@ public class TaxisUtils {
         }
 
         String[] idList = participants.split(">");
+        if (idList.length == 1) {
+            return new ArrayList<>();
+        }
         List<DSTaxi> taxiToRelease = new ArrayList<>();
 
         for (String id : idList) {
